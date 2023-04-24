@@ -1,15 +1,23 @@
 import { Context } from 'telegraf';
-import { Ctx, Hears, On, Update } from 'nestjs-telegraf';
+import { Message, Update as CtxUpdate } from 'typegram';
+import { Ctx, On, Update } from 'nestjs-telegraf';
+
+import { LongWeekService } from './long-week.service';
+
+type ContextMessage = Context<CtxUpdate.MessageUpdate<Message.TextMessage>>;
 
 @Update()
 export class LongWeekUpdate {
-  @On('message')
-  async test() {
-    return 'testinho';
-  }
+  constructor(private longWeek: LongWeekService) {}
 
-  @Hears('semana longa')
-  async hears(@Ctx() ctx: Context) {
-    await ctx.reply('Cadê a live?');
+  @On('text')
+  async LongWeekReply(@Ctx() ctx: ContextMessage) {
+    const {
+      message: { text, message_id },
+    } = ctx;
+
+    if (this.longWeek.isTriggeredBy(text)) {
+      ctx.reply(this.longWeek.reply(), { reply_to_message_id: message_id });
+    }
   }
 }

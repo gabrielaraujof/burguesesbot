@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { TelegrafModule } from 'nestjs-telegraf';
 
-import { BotToken, WebhookDomain, WebhookSecretPath } from '../constants';
+import { BotToken } from '../constants';
 import { LongWeekModule } from '../long-week/long-week.module';
 
 @Module({
@@ -12,12 +12,6 @@ import { LongWeekModule } from '../long-week/long-week.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get(BotToken, ''),
-        launchOptions: {
-          webhook: {
-            domain: configService.get(WebhookDomain, ''),
-            hookPath: configService.get(WebhookSecretPath),
-          },
-        },
       }),
       inject: [ConfigService],
     }),
