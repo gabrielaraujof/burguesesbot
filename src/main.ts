@@ -1,24 +1,36 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 
+import { Telegraf } from 'telegraf';
 import { getBotToken } from 'nestjs-telegraf';
+import { Callback, Context, Handler } from 'aws-lambda';
 
 import { AppModule } from './app.module';
-import { Port, WebhookDomain } from './constants';
-import { Telegraf } from 'telegraf';
+import { Env } from './helper/constants';
+import { isProduction } from './helper/functions';
+import { serverBootstrap, serverlessBoostrap } from './bootstrap';
+
+let server: Handler;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const configService = app.get(ConfigService);
+  const config = app.get(ConfigService);
 
   const bot = app.get<Telegraf>(getBotToken());
 
-  app.use(
-    await bot.createWebhook({ domain: configService.get(WebhookDomain, '') }),
-  );
+  if (isProduction(config.get(Env, 'development'))) {
+    return await serverlessBoostrap(app, config, bot);
+  }
 
-  await app.listen(configService.get<number>(Port, 3000));
+  await serverBootstrap(app, config, bot);
 }
 
-bootstrap();
+export const handler: Handler = async (
+  event: any,
+  context: Context,
+  callback: Callback,
+) => {
+  server = server ?? (await bootstrap());
+  return server(event, context, callback);
+};

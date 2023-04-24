@@ -1,0 +1,29 @@
+service: burguesesbot
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: prod
+  region: us-east-1
+  environment:
+    BOT_TOKEN: ${env:BOT_TOKEN}
+    WEBHOOK_DOMAIN: ${env:WEBHOOK_DOMAIN}
+    WEBHOOK_SECRET_PATH: ${env:WEBHOOK_SECRET_PATH}
+
+
+functions:
+  webhook:
+    handler: dist/main.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+      - http:
+          method: ANY
+          path: '{proxy+}'

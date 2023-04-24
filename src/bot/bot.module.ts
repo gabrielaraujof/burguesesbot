@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { TelegrafModule } from 'nestjs-telegraf';
 
-import { BotToken } from '../constants';
+import { BotToken } from '../helper/constants';
 import { LongWeekModule } from '../long-week/long-week.module';
 
 @Module({
