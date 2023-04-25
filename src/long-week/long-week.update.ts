@@ -1,6 +1,8 @@
+import { Logger } from '@nestjs/common';
+
 import { Context } from 'telegraf';
 import { Message, Update as CtxUpdate } from 'typegram';
-import { Ctx, On, Update } from 'nestjs-telegraf';
+import { Ctx, On, Update, Command, Hears } from 'nestjs-telegraf';
 
 import { LongWeekService } from './long-week.service';
 
@@ -8,16 +10,19 @@ type ContextMessage = Context<CtxUpdate.MessageUpdate<Message.TextMessage>>;
 
 @Update()
 export class LongWeekUpdate {
+  private readonly logger = new Logger(LongWeekUpdate.name);
+
   constructor(private longWeek: LongWeekService) {}
 
-  @On('text')
+  @Command('semanalonga')
   async LongWeekReply(@Ctx() ctx: ContextMessage) {
-    const {
-      message: { text, message_id },
-    } = ctx;
+    await ctx.reply(this.longWeek.reply());
+  }
 
-    if (this.longWeek.isTriggeredBy(text)) {
-      ctx.reply(this.longWeek.reply(), { reply_to_message_id: message_id });
-    }
+  @Command('fuck')
+  async fuck(@Ctx() ctx: ContextMessage) {
+    const { from: { first_name, last_name } } = ctx.message;
+    const prefix = last_name ? `${last_name}, ` : '';
+    await ctx.replyWithMarkdownV2(`Foda\\-se\\.\n\\- _${prefix}${first_name}_`);
   }
 }

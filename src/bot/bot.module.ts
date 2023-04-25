@@ -12,6 +12,7 @@ import { LongWeekModule } from '../long-week/long-week.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get(BotToken, ''),
+        launchOptions: false
       }),
       inject: [ConfigService],
     }),

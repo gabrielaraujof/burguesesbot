@@ -8,6 +8,6 @@ export class LongWeekService {
     return longWeekRegex.test(text);
   }
   reply() {
-    return 'vai ter live?';
+    return 'cadê a live?';
   }
 }
