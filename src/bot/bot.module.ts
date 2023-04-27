@@ -3,8 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { TelegrafModule } from 'nestjs-telegraf';
 
+import { LongWeekUpdate } from './long-week/long-week.update';
 import { BotToken } from '../helper/constants';
-import { LongWeekModule } from '../long-week/long-week.module';
+import { NotifyService } from './notify/notify.service';
+import { NotifyController } from './notify/notify.controller';
 
 @Module({
   imports: [
@@ -12,11 +14,12 @@ import { LongWeekModule } from '../long-week/long-week.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get(BotToken, ''),
-        launchOptions: false
+        launchOptions: false,
       }),
       inject: [ConfigService],
     }),
-    LongWeekModule,
   ],
+  providers: [LongWeekUpdate, NotifyService],
+  controllers: [NotifyController],
 })
 export class BotModule {}

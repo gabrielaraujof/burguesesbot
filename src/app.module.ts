@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { BotModule } from './bot/bot.module';
 import { ConfigModule } from '@nestjs/config';
+
+import { BotModule } from './bot/bot.module';
 
 @Module({
   imports: [

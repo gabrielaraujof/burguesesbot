@@ -39,6 +39,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "@vendia/serverless-express": "^4.10.1",
     "aws-lambda": "^1.0.7",
+    "class-validator": "^0.14.0",
     "nestjs-telegraf": "^2.6.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
