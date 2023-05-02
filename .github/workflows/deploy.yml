@@ -1,0 +1,42 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/default.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+      statuses: write 
+      deployments: write
+      checks: write
+
+  
+  production:
+    name: Production Deploy
+    runs-on: ubuntu-latest
+    needs: [ci]
+    environment:
+      name: prd
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-18
+          path: build
+
+      - name: Setup aws cli
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy serverless to AWS Lambda
+        run: npm run deploy
