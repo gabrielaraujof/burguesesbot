@@ -24,6 +24,9 @@ jobs:
     needs: [ci]
     environment:
       name: prd
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
