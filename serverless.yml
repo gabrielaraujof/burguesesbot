@@ -10,6 +10,9 @@ provider:
   name: aws
   runtime: nodejs14.x
   region: us-east-1
+  environment:
+    BOT_TOKEN: ${env:BOT_TOKEN}
+    WEBHOOK_SECRET_PATH: ${env:WEBHOOK_SECRET_PATH}
 
 functions:
   webhook:
