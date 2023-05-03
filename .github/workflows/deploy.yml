@@ -44,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-18
-          path: build
+          path: dist
 
       - name: Setup aws cli
         uses: aws-actions/configure-aws-credentials@v1
