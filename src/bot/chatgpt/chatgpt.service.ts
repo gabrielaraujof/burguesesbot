@@ -18,7 +18,7 @@ export class ChatgptService {
   async prompt(prompt: string): Promise<string> {
     this.logger.log(`Calling OpenAPI with prompt: ${prompt}`);
     const gptResponse = await this.openai.createCompletion({
-      model: 'text-ada-001',
+      model: 'text-davinci-003',
       prompt,
       max_tokens: 100,
       temperature: 0.5,

@@ -18,7 +18,7 @@ export class Chat {
     let replyMessage = 'Não entendi';
     try {
       replyMessage = await this.chatGpt.prompt(
-        ctx.message.text.replace(/burguesesbot/g, ''),
+        ctx.message.text.replace(/@burguesesbot/g, ''),
       );
     } catch (error) {
       if (error.response?.status === 429) {
