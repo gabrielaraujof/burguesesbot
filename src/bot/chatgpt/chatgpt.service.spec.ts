@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatgptService } from './chatgpt.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('ChatgptService', () => {
   let service: ChatgptService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ChatgptService],
+      providers: [ChatgptService, ConfigService],
     }).compile();
 
     service = module.get<ChatgptService>(ChatgptService);

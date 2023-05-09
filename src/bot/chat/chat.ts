@@ -13,15 +13,24 @@ export class Chat {
 
   constructor(private chatGpt: ChatgptService) {}
 
-  @Mention('FzoBot')
+  @Mention('burguesesbot')
   async onMention(@Ctx() ctx: ContextMessage) {
+    let replyMessage = 'Não entendi';
     try {
-      const message = await this.chatGpt.prompt(ctx.message.text);
-      await ctx.reply(message);
+      replyMessage = await this.chatGpt.prompt(
+        ctx.message.text.replace(/burguesesbot/g, ''),
+      );
     } catch (error) {
-      if (error.response.status === 429) {
-        await ctx.reply('Tô ocupada agora, não consigo responder.');
+      if (error.response?.status === 429) {
+        replyMessage = 'Tô ocupada agora, não consigo responder.';
+      } else {
+        this.logger.error(error);
+        replyMessage = 'Eita, deu ruim aqui.';
       }
+    } finally {
+      await ctx.reply(replyMessage, {
+        reply_to_message_id: ctx.message.message_id,
+      });
     }
   }
 }
