@@ -7,6 +7,8 @@ import { LongWeekUpdate } from './long-week/long-week.update';
 import { BotToken } from '../helper/constants';
 import { NotifyService } from './notify/notify.service';
 import { NotifyController } from './notify/notify.controller';
+import { Chat } from './chat/chat';
+import { ChatgptService } from './chatgpt/chatgpt.service';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { NotifyController } from './notify/notify.controller';
       inject: [ConfigService],
     }),
   ],
-  providers: [LongWeekUpdate, NotifyService],
+  providers: [LongWeekUpdate, NotifyService, Chat, ChatgptService],
   controllers: [NotifyController],
 })
 export class BotModule {}

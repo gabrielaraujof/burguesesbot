@@ -9,3 +9,7 @@ export const DiscordBotToken = 'DISCORD_BOT_TOKEN';
 export const Port = 'PORT';
 
 export const Env = 'NODE_ENV';
+
+export const BotUsername = 'BOT_USERNAME';
+
+export const OpenAIKey = 'OPENAI_API_KEY';

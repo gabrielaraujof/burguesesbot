@@ -13,6 +13,7 @@ provider:
   environment:
     BOT_TOKEN: ${env:BOT_TOKEN}
     WEBHOOK_SECRET_PATH: ${env:WEBHOOK_SECRET_PATH}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY}
 
 functions:
   webhook:
