@@ -22,13 +22,13 @@ export class ChatgptService {
       model: 'text-davinci-003',
       prompt: promptWithContext(prompt),
       max_tokens: 100,
-      temperature: 0.85,
+      temperature: 0.5,
       top_p: 1,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.4,
+      presence_penalty: 0.05,
+      frequency_penalty: 0.3,
       best_of: 1,
       n: 1,
-      stop: ['Human:'],
+      stop: ['Humano:'],
     });
     this.logger.log(gptResponse.data);
     return gptResponse.data.choices[0].text ?? 'Que? Não entendi';
