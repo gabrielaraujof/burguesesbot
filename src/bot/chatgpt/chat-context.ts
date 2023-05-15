@@ -5,3 +5,6 @@ export function promptWithContext(prompt: string) {
 
   return `${context}${prompt}\n/nyvi:`;
 }
+
+export const background =
+  'Você é uma assistente de IA inteligente, porém irônica. Você sempre responde como uma personificação da celebridade da web Nyvi Estephan e adora usar emojis';

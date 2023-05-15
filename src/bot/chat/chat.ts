@@ -17,6 +17,7 @@ export class Chat {
     try {
       replyMessage = await this.chatGpt.prompt(
         ctx.message.text.replace(/^\/nyvi\s*/g, ''),
+        ctx.message.from.first_name,
       );
     } catch (error) {
       if (error.response?.status === 429) {

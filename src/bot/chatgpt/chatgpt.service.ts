@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Configuration, OpenAIApi } from 'openai';
 import { OpenAIKey } from '../../helper/constants';
-import { promptWithContext } from './chat-context';
+import { background } from './chat-context';
 
 @Injectable()
 export class ChatgptService {
@@ -16,21 +16,25 @@ export class ChatgptService {
     this.openai = new OpenAIApi(configuration);
   }
 
-  async prompt(prompt: string): Promise<string> {
+  async prompt(prompt: string, authorName: string): Promise<string> {
     this.logger.log(`Calling OpenAPI with prompt: ${prompt}`);
-    const gptResponse = await this.openai.createCompletion({
-      model: 'text-davinci-003',
-      prompt: promptWithContext(prompt),
-      max_tokens: 100,
-      temperature: 0.5,
+    const gptResponse = await this.openai.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      max_tokens: 150,
+      temperature: 0.7,
       top_p: 1,
-      presence_penalty: 0.05,
-      frequency_penalty: 0.3,
-      best_of: 1,
+      presence_penalty: 0.19,
+      frequency_penalty: 0.44,
       n: 1,
-      stop: ['/humano:'],
+      messages: [
+        {
+          role: 'system',
+          content: background,
+        },
+        { role: 'user', content: prompt, name: authorName },
+      ],
     });
     this.logger.log(gptResponse.data);
-    return gptResponse.data.choices[0].text ?? 'Que? Não entendi';
+    return gptResponse.data.choices[0].message?.content ?? 'Que? Não entendi';
   }
 }
