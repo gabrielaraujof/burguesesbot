@@ -28,6 +28,9 @@ jobs:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3

@@ -14,6 +14,8 @@ provider:
     BOT_TOKEN: ${env:BOT_TOKEN}
     WEBHOOK_SECRET_PATH: ${env:WEBHOOK_SECRET_PATH}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
+    DISCORD_BOT_TOKEN: ${env:DISCORD_BOT_TOKEN}
+    DISCORD_GUILD_ID: ${env:DISCORD_GUILD_ID}
 
 functions:
   webhook:

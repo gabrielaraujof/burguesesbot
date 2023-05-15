@@ -6,6 +6,8 @@ export const BotToken = 'BOT_TOKEN';
 
 export const DiscordBotToken = 'DISCORD_BOT_TOKEN';
 
+export const DiscordGuildId = 'DISCORD_GUILD_ID';
+
 export const Port = 'PORT';
 
 export const Env = 'NODE_ENV';

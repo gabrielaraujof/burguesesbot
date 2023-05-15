@@ -28,7 +28,7 @@ export class ChatgptService {
       frequency_penalty: 0.3,
       best_of: 1,
       n: 1,
-      stop: ['Humano:'],
+      stop: ['/humano:'],
     });
     this.logger.log(gptResponse.data);
     return gptResponse.data.choices[0].text ?? 'Que? Não entendi';

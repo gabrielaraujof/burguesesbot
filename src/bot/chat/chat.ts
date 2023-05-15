@@ -1,24 +1,22 @@
 import { Logger } from '@nestjs/common';
 
-import { Message, Update as CtxUpdate } from 'typegram';
-import { Ctx, Mention, Update } from 'nestjs-telegraf';
-import { Context } from 'telegraf';
+import { Ctx, Update as Listener, Command } from 'nestjs-telegraf';
+
 import { ChatgptService } from '../chatgpt/chatgpt.service';
+import { ContextMessage } from '../../helper/types';
 
-type ContextMessage = Context<CtxUpdate.MessageUpdate<Message.TextMessage>>;
-
-@Update()
+@Listener()
 export class Chat {
   private readonly logger = new Logger(Chat.name);
 
   constructor(private chatGpt: ChatgptService) {}
 
-  @Mention('burguesesbot')
-  async onMention(@Ctx() ctx: ContextMessage) {
+  @Command('nyvi')
+  async onChattingGPT(@Ctx() ctx: ContextMessage) {
     let replyMessage = 'Não entendi';
     try {
       replyMessage = await this.chatGpt.prompt(
-        ctx.message.text.replace(/@burguesesbot/g, ''),
+        ctx.message.text.replace(/^\/nyvi\s*/g, ''),
       );
     } catch (error) {
       if (error.response?.status === 429) {
