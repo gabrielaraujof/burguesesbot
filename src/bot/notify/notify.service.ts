@@ -8,8 +8,6 @@ export class NotifyService {
   constructor(@InjectBot() private bot: Telegraf<Context>) {}
 
   async notify(chatId: string, message: string) {
-    await this.bot.telegram.sendMessage(chatId, message, {
-      parse_mode: 'MarkdownV2',
-    });
+    await this.bot.telegram.sendMessage(chatId, message);
   }
 }
