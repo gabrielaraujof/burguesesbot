@@ -28,7 +28,13 @@ export class DiscordService {
     const onlineMessage = onlineMembers
       .map((member) => {
         const game = member.presence?.activities[0];
-        return `\n  • ${member.displayName}${game ? ` (${game?.name})` : ''}`;
+        const gameMessage = game ? ` (${game?.name})` : '';
+        const channelMessage = member.voice.channel
+          ? ` - ${member.voice.channel.name} ${
+              member.voice.streaming ? '🔴 LIVE' : ''
+            }`
+          : '';
+        return `\n  • ${member.displayName}${gameMessage}${channelMessage}`;
       })
       .join('');
 

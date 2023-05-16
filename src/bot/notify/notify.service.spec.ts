@@ -36,6 +36,8 @@ describe('Notify Service', () => {
 
     service.notify(chatId, message);
 
-    expect(bot.telegram.sendMessage).toBeCalledWith(chatId, message);
+    expect(bot.telegram.sendMessage).toBeCalledWith(chatId, message, {
+      parse_mode: 'MarkdownV2',
+    });
   });
 });
