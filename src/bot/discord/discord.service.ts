@@ -1,75 +1,37 @@
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 
 import { Ctx, Update as Listener, Command } from 'nestjs-telegraf';
 
-import { ActivityType, Client, PresenceUpdateStatus } from 'discord.js';
-import { InjectDiscordClient } from '@discord-nestjs/core';
-
 import { ContextMessage } from '../../helper/types';
-import { DiscordGuildId } from '../../helper/constants';
+import { GuildProvider } from '../../discord';
 
 @Listener()
 export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
 
-  constructor(
-    private config: ConfigService,
-    @InjectDiscordClient()
-    private readonly client: Client,
-  ) {}
+  constructor(private readonly guildProvider: GuildProvider) {}
 
   @Command('whosplaying')
   async whosplaying(@Ctx() ctx: ContextMessage) {
-    const onlineMembers = await this.getOnlineMembersWithGame();
-    const replyMessage = `${onlineMembers.size} ${
-      onlineMembers.size === 1 ? 'burguês' : 'burgueses'
+    this.logger.debug('Command whosplaying activated');
+
+    const members = this.guildProvider.getOnlineMembers();
+    const replyMessage = `${members.length} ${
+      members.length === 1 ? 'burguês' : 'burgueses'
     } jogando agora. 🎮\n`;
-    const onlineMessage = onlineMembers
-      .map((member) => {
-        const game = member.presence?.activities[0];
-        const gameMessage = game ? ` (${game?.name})` : '';
-        const channelMessage = member.voice.channel
-          ? ` - ${member.voice.channel.name} ${
-              member.voice.streaming ? '🔴 LIVE' : ''
+    const onlineMessage = members
+      .map(({ name, voiceChannel, game }) => {
+        const gameMessage = game ? ` (${game})` : '';
+        const channelMessage = voiceChannel
+          ? ` - ${voiceChannel.name} ${
+              voiceChannel.isStreaming ? '🔴 LIVE' : ''
             }`
           : '';
-        return `\n  • ${member.displayName}${gameMessage}${channelMessage}`;
+        return `\n  • ${name}${gameMessage}${channelMessage}`;
       })
       .join('');
 
+    this.logger.debug('Replying command');
     ctx.reply(`${replyMessage}${onlineMessage}`);
-  }
-
-  private async getOnlineMembersWithGame() {
-    const guildId = this.config.get(DiscordGuildId, '');
-    const guild = this.client.guilds.cache.get(guildId);
-    if (!guild) {
-      throw new Error('Invalid guild ID');
-    }
-
-    const role = guild.roles.cache.find((r) => r.name === 'Burguês');
-    if (!role) {
-      throw new Error('Invalid role name');
-    }
-
-    const onlineMembers = guild.members.cache.filter(
-      (member) => member.presence?.status === PresenceUpdateStatus.Online,
-    );
-
-    const onlineMembersWithGame = onlineMembers.filter((member) => {
-      const activities = member.presence?.activities;
-      if (!activities?.length) return false;
-
-      const playingGames = activities.filter(
-        (activity) => activity.type === ActivityType.Playing,
-      );
-      if (!playingGames.length) return false;
-
-      const hasRole = member.roles.cache.has(role.id);
-      return hasRole;
-    });
-
-    return onlineMembersWithGame;
   }
 }

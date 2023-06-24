@@ -3,8 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { TelegrafModule } from 'nestjs-telegraf';
 import { GatewayIntentBits } from 'discord.js';
-import { DiscordModule } from '@discord-nestjs/core';
 
+import { DiscordModule } from '../discord';
 import { LongWeekUpdate } from './long-week/long-week.update';
 import { BotToken, DiscordBotToken } from '../helper/constants';
 import { NotifyService } from './notify/notify.service';
@@ -23,19 +23,7 @@ import { DiscordService } from './discord/discord.service';
       }),
       inject: [ConfigService],
     }),
-    DiscordModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        token: configService.get(DiscordBotToken, ''),
-        discordClientOptions: {
-          intents: [
-            GatewayIntentBits.Guilds,
-            GatewayIntentBits.GuildMembers,
-            GatewayIntentBits.GuildPresences,
-          ],
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    DiscordModule,
   ],
   providers: [
     LongWeekUpdate,
