@@ -10,8 +10,8 @@ import { BotToken, DiscordBotToken } from '../helper/constants';
 import { NotifyService } from './notify/notify.service';
 import { NotifyController } from './notify/notify.controller';
 import { Chat } from './chat/chat';
-import { ChatgptService } from './chatgpt/chatgpt.service';
 import { DiscordService } from './discord/discord.service';
+import { AiModule } from '../ai';
 
 @Module({
   imports: [
@@ -24,12 +24,12 @@ import { DiscordService } from './discord/discord.service';
       inject: [ConfigService],
     }),
     DiscordModule,
+    AiModule,
   ],
   providers: [
     LongWeekUpdate,
     NotifyService,
     Chat,
-    ChatgptService,
     DiscordService,
   ],
   controllers: [NotifyController],

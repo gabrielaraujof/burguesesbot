@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { BotModule } from './bot/bot.module';
 import { DiscordModule } from './discord/discord.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { DiscordModule } from './discord/discord.module';
     }),
     BotModule,
     DiscordModule,
+    AiModule,
   ],
 })
 export class AppModule {}
