@@ -20,10 +20,10 @@ export class Chat {
         ctx.message.from.first_name,
       );
     } catch (error) {
+      this.logger.error(error?.response?.data?.error.message || error?.message);
       if (error.response?.status === 429) {
         replyMessage = 'Tô ocupada agora, não consigo responder.';
       } else {
-        this.logger.error(error);
         replyMessage = 'Eita, deu ruim aqui.';
       }
     } finally {
