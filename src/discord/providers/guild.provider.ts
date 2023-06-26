@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { Client, Guild } from 'discord.js';
+import { Client } from 'discord.js';
 import { InjectDiscordClient } from '@discord-nestjs/core';
 
 import { DiscordGuildId } from '../../helper/constants';
@@ -30,6 +30,7 @@ export class GuildProvider {
     const guild = this.getGuild(this.guildID);
     const role = guildRoleByname(guild, 'Burguês');
 
+    this.logger.debug('Getting online discord members...');
     return guild.members.cache
       .filter(memberHasRole(role))
       .filter(isMemberOnline)

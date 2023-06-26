@@ -24,10 +24,12 @@ export const toMemberDto = (member: GuildMember): MemberDto => {
   const channel = member.voice.channel;
   return {
     name: member.displayName,
-    voiceChannel: channel ? {
-      name: channel.name,
-      isStreaming: member.voice.streaming ?? false,
-    } : null,
+    voiceChannel: channel
+      ? {
+          name: channel.name,
+          isStreaming: member.voice.streaming ?? false,
+        }
+      : null,
     game: member.presence?.activities?.find(isPlaying)?.name,
   };
 };

@@ -1,4 +1,4 @@
-import { ChatCompletionRequestMessage } from "openai";
+import { ChatCompletionRequestMessage } from 'openai';
 
 export const userPrompt = (
   author: string,

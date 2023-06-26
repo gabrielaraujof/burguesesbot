@@ -7,7 +7,11 @@ describe('ChatService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [ChatService],
-    }).compile();
+    })
+      .useMocker(() => ({
+        get: jest.fn(),
+      }))
+      .compile();
 
     provider = module.get<ChatService>(ChatService);
   });
