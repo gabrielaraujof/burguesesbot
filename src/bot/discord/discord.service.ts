@@ -2,8 +2,8 @@ import { Logger } from '@nestjs/common';
 
 import { Ctx, Update as Listener, Command } from 'nestjs-telegraf';
 
-import { ContextMessage } from '../../helper/types';
 import { GuildProvider } from '../../discord';
+import { Context } from 'telegraf';
 
 @Listener()
 export class DiscordService {
@@ -12,7 +12,7 @@ export class DiscordService {
   constructor(private readonly guildProvider: GuildProvider) {}
 
   @Command('whosplaying')
-  async whosplaying(@Ctx() ctx: ContextMessage) {
+  async whosplaying(@Ctx() ctx: Context) {
     this.logger.debug('Command whosplaying activated');
 
     const members = this.guildProvider.getOnlineMembers();

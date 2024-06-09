@@ -30,6 +30,8 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
       DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+      FREE_GAMES_PROMOTIONS_URL: ${{ secrets.FREE_GAMES_PROMOTIONS_URL }}
+      PRODUCT_STORE_URL: ${{ secrets.PRODUCT_STORE_URL }}
 
     steps:
       - name: Checkout the repository

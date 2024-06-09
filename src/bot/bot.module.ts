@@ -11,9 +11,12 @@ import { NotifyController } from './notify/notify.controller';
 import { Chat } from './chat/chat';
 import { DiscordService } from './discord/discord.service';
 import { AiModule } from '../ai';
+import { FreegamesService } from './freegames/freegames.service';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    HttpModule,
     TelegrafModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -25,7 +28,13 @@ import { AiModule } from '../ai';
     DiscordModule,
     AiModule,
   ],
-  providers: [LongWeekUpdate, NotifyService, Chat, DiscordService],
+  providers: [
+    LongWeekUpdate,
+    NotifyService,
+    Chat,
+    DiscordService,
+    FreegamesService,
+  ],
   controllers: [NotifyController],
 })
 export class BotModule {}

@@ -15,3 +15,7 @@ export const Env = 'NODE_ENV';
 export const BotUsername = 'BOT_USERNAME';
 
 export const OpenAIKey = 'OPENAI_API_KEY';
+
+export const FreeGamesPromotionsUrl = 'FREE_GAMES_PROMOTIONS_URL';
+
+export const ProductStoreUrl = 'PRODUCT_STORE_URL';

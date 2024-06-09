@@ -1,23 +1,29 @@
 import { Logger } from '@nestjs/common';
 
-import { Ctx, Update as Listener, Command } from 'nestjs-telegraf';
+import { Ctx, Update, Command, Message, Sender } from 'nestjs-telegraf';
 
-import { ContextMessage } from '../../helper/types';
 import { ChatService } from '../../ai';
+import { Context } from 'telegraf';
 
-@Listener()
+@Update()
 export class Chat {
   private readonly logger = new Logger(Chat.name);
 
   constructor(private readonly chat: ChatService) {}
 
   @Command('nyvi')
-  async onChattingGPT(@Ctx() ctx: ContextMessage) {
+  async onChattingGPT(
+    @Ctx() ctx: Context,
+    @Message('text') text: string,
+    @Message('message_id') message_id: number,
+    @Sender('first_name') firstName: string,
+  ) {
     let replyMessage = '';
+
     try {
       const data = await this.chat.complete(
-        ctx.message.text.replace(/^\/nyvi\s*/g, ''),
-        ctx.message.from.first_name,
+        text.replace(/^\/nyvi\s*/g, ''),
+        firstName,
       );
       replyMessage = data.choices[0].message?.content ?? 'Que? Não entendi';
     } catch (error) {
@@ -29,7 +35,7 @@ export class Chat {
       }
     } finally {
       await ctx.reply(replyMessage, {
-        reply_to_message_id: ctx.message.message_id,
+        reply_parameters: { message_id },
       });
     }
   }
