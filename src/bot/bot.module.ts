@@ -13,6 +13,7 @@ import { DiscordService } from './discord/discord.service';
 import { AiModule } from '../ai';
 import { FreegamesService } from './freegames/freegames.service';
 import { HttpModule } from '@nestjs/axios';
+import { TriviaService } from './trivia/trivia.service';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HttpModule } from '@nestjs/axios';
     Chat,
     DiscordService,
     FreegamesService,
+    TriviaService,
   ],
   controllers: [NotifyController],
 })

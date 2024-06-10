@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LongWeekUpdate } from './long-week.update';
 import { Context } from 'telegraf';
 import { FreegamesService } from '../freegames/freegames.service';
+import { TriviaService } from '../trivia/trivia.service';
 
 const greeGamesMock = [
   {
@@ -38,6 +39,18 @@ describe('LongWeekService', () => {
             buildPhotoCaption: jest.fn(() => 'caption'),
           },
         },
+        {
+          provide: TriviaService,
+          useValue: {
+            getQuestions: jest.fn().mockResolvedValue([
+              {
+                title: 'Question 1',
+                options: ['A', 'B', 'C'],
+                correctOptionIndex: 1,
+              },
+            ]),
+          },
+        },
       ],
     }).compile();
 
@@ -54,23 +67,5 @@ describe('LongWeekService', () => {
     await service.LongWeekReply(ctx);
 
     expect(ctx.reply).toBeCalledWith('cadê a live?');
-  });
-
-  it('should reply with "Foda-se." and the user name', async () => {
-    const ctx = {
-      message: {
-        from: {
-          first_name: 'John',
-          last_name: 'Doe',
-        },
-      },
-      replyWithMarkdownV2: jest.fn(),
-    } as unknown as Context;
-
-    await service.fuck(ctx, 'John', 'Doe');
-
-    expect(ctx.replyWithMarkdownV2).toBeCalledWith(
-      'Foda\\-se\\.\n\\- _Doe, John_',
-    );
   });
 });

@@ -27,7 +27,7 @@ export class ChatService {
     });
     this.openai = new OpenAIApi(configuration);
     this.optiosnBuilder = new CompletionOptionsBuilder({
-      model: 'gpt-3.5-turbo-0613',
+      model: 'gpt-3.5-turbo-0125',
       max_tokens: 150,
       temperature: 0.7,
       top_p: 1,
