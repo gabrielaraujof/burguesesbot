@@ -4,18 +4,22 @@ import { CategoryId, Difficulty, TriviaResponse } from './trivia.interface';
 import { firstValueFrom, map } from 'rxjs';
 import { toQuiz } from './trivia.helper';
 
+type GetQuestionsOpts = {
+  amount?: number;
+  difficulty: Difficulty;
+  category: CategoryId;
+};
+
 @Injectable()
 export class TriviaService {
   private readonly logger = new Logger(TriviaService.name);
 
   constructor(private readonly http: HttpService) {}
 
-  getQuestions(
-    amount = 1,
-    difficulty: Difficulty = 'hard',
-    category: CategoryId = CategoryId.VideoGames,
-  ) {
-    this.logger.log('Requesting trivia question...');
+  getQuestions({ amount = 1, difficulty, category }: GetQuestionsOpts) {
+    this.logger.log(
+      `Requesting a ${difficulty} trivia question about category ${category}...`,
+    );
     const request$ = this.http
       .get<TriviaResponse>(`https://opentdb.com/api.php`, {
         params: {

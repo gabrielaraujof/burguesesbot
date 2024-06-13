@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LongWeekUpdate } from './long-week.update';
 import { Context } from 'telegraf';
 import { FreegamesService } from '../freegames/freegames.service';
-import { TriviaService } from '../trivia/trivia.service';
 
 const greeGamesMock = [
   {
@@ -37,18 +36,6 @@ describe('LongWeekService', () => {
           useValue: {
             getFreeGames: jest.fn().mockResolvedValue(greeGamesMock),
             buildPhotoCaption: jest.fn(() => 'caption'),
-          },
-        },
-        {
-          provide: TriviaService,
-          useValue: {
-            getQuestions: jest.fn().mockResolvedValue([
-              {
-                title: 'Question 1',
-                options: ['A', 'B', 'C'],
-                correctOptionIndex: 1,
-              },
-            ]),
           },
         },
       ],
