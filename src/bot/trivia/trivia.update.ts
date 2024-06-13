@@ -55,7 +55,6 @@ export class TriviaUpdate {
       }
     } catch (err) {
       this.logger.error(err);
-      await ctx.reply('Eita, deu ruim aqui.');
     }
   }
 }

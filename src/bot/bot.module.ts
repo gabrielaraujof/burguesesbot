@@ -23,7 +23,7 @@ import { TriviaUpdate } from './trivia/trivia.update';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         token: configService.get(BotToken, ''),
-        launchOptions: false,
+        // launchOptions: false,
       }),
       inject: [ConfigService],
     }),

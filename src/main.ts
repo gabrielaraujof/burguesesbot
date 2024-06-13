@@ -12,9 +12,9 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
 
-  const bot = app.get<Telegraf>(getBotToken());
+  // const bot = app.get<Telegraf>(getBotToken());
 
-  app.use(await bot.createWebhook({ domain: config.get(WebhookDomain, '') }));
+  // app.use(await bot.createWebhook({ domain: config.get(WebhookDomain, '') }));
 
   await app.listen(config.get<number>(Port, 3000));
 }
