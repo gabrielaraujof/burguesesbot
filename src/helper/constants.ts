@@ -1,5 +1,7 @@
 export const WebhookDomain = 'WEBHOOK_DOMAIN';
 
+export const NgrokAuthToken = 'NGROK_AUTH_TOKEN';
+
 export const WebhookSecretPath = 'WEBHOOK_SECRET_PATH';
 
 export const BotToken = 'BOT_TOKEN';
