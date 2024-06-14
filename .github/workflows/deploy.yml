@@ -2,7 +2,7 @@ name: Continuous Deployment
 
 on:
   push:
-    branches: [v2]
+    branches: main
 
 jobs:
   ci:
