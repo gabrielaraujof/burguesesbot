@@ -10,7 +10,7 @@
     "test": "echo Teste",
     "test:cov": "echo Teste coverage",
     "lint": "echo lint",
-    "build": "swc ./src -q -d dist",
+    "build": "swc ./src -q -d dist --strip-leading-paths",
     "deploy:dev": "sls deploy --stage development",
     "deploy": "sls deploy --stage production"
   },
