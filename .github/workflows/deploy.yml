@@ -1,0 +1,103 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [v2]
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/default.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+      statuses: write 
+      deployments: write
+      checks: write
+
+  staging:
+    name: Staging Deploy
+    runs-on: ubuntu-latest
+    needs: ci
+    environment:
+      name: stg
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
+      FREE_GAMES_PROMOTIONS_URL: ${{ secrets.FREE_GAMES_PROMOTIONS_URL }}
+      PRODUCT_STORE_URL: ${{ secrets.PRODUCT_STORE_URL }}
+      OPEN_TRIVIA_DB_URL: ${{ secrets.OPEN_TRIVIA_DB_URL }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-20
+          path: dist
+
+      - name: Setup aws cli
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy serverless to AWS Lambda
+        run: npm run deploy:dev
+
+
+  production:
+    name: Production Deploy
+    runs-on: ubuntu-latest
+    needs: staging
+    environment:
+      name: prd
+    env:
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
+      FREE_GAMES_PROMOTIONS_URL: ${{ secrets.FREE_GAMES_PROMOTIONS_URL }}
+      PRODUCT_STORE_URL: ${{ secrets.PRODUCT_STORE_URL }}
+      OPEN_TRIVIA_DB_URL: ${{ secrets.OPEN_TRIVIA_DB_URL }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-20
+          path: dist
+
+      - name: Setup aws cli
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy serverless to AWS Lambda
+        run: npm run deploy

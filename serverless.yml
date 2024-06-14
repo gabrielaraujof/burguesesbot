@@ -1,0 +1,32 @@
+service: burgueses
+
+useDotenv: true
+
+package:
+  excludeDevDependencies: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  memorySize: 512 
+  timeout: 10
+  region: us-east-1
+  environment:
+    BOT_TOKEN: ${env:BOT_TOKEN}
+    WEBHOOK_SECRET_PATH: ${env:WEBHOOK_SECRET_PATH}
+    FREE_GAMES_PROMOTIONS_URL: ${env:FREE_GAMES_PROMOTIONS_URL}
+    PRODUCT_STORE_URL: ${env:PRODUCT_STORE_URL}
+    OPEN_TRIVIA_DB_URL: ${env:OPEN_TRIVIA_DB_URL}
+
+plugins:
+  - serverless-dotenv-plugin
+
+functions:
+  webhook:
+    name: ${sls:stage}-burguesesbot
+    handler: dist/function.handler
+    url: true
+    events:
+      - http:
+          path: '{proxy+}'
+          method: post
