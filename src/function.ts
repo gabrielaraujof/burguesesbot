@@ -1,24 +1,20 @@
-import type { Callback, Context, Handler } from 'aws-lambda';
-import { configure } from '@codegenie/serverless-express';
+import http from 'serverless-http'
+import type { Callback, Context, Handler } from 'aws-lambda'
 
-import createBot from './bot.js';
+import createBot from './bot.js'
 
-let proxy: Handler;
+let proxy: Handler
 
-async function setup(event: any, context: Context, cb: Callback) {
-  const bot = createBot(process.env.BOT_TOKEN ?? '');
-  console.log(`Creating bot on ${process.env.WEBHOOK_SECRET_PATH}`);
-
-  const app = bot.webhookCallback(process.env.WEBHOOK_SECRET_PATH);
-
-  proxy = configure({ app });
-  return proxy(event, context, cb);
+function setup() {
+  const bot = createBot(process.env.BOT_TOKEN ?? '')
+  const app = bot.webhookCallback(process.env.WEBHOOK_SECRET_PATH)
+  return http(app)
 }
 
 function handler(event: any, context: Context, cb: Callback) {
-  if (proxy) return proxy(event, context, cb);
+  if (!proxy) proxy = setup()
 
-  return setup(event, context, cb);
+  return proxy(event, context, cb)
 }
 
-export { handler };
+export { handler }
