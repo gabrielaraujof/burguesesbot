@@ -27,6 +27,6 @@ functions:
     handler: dist/function.handler
     url: true
     events:
-      - http:
-          path: '{proxy+}'
-          method: post
+      - httpApi:
+          path: /${env:WEBHOOK_SECRET_PATH}
+          method: POST
