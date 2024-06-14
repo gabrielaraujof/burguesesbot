@@ -26,6 +26,6 @@ functions:
     name: ${sls:stage}-burguesesbot
     handler: dist/function.handler
     events:
-      - http:
-          method: ANY
-          path: '{proxy+}'
+      - httpApi:
+          method: post
+          path: '/${env:WEBHOOK_SECRET_PATH}'
