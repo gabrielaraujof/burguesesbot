@@ -25,8 +25,7 @@ functions:
   webhook:
     name: ${sls:stage}-burguesesbot
     handler: dist/function.handler
-    url: true
     events:
-      - httpApi:
-          path: /${env:WEBHOOK_SECRET_PATH}
-          method: POST
+      - http:
+          method: ANY
+          path: '{proxy+}'
