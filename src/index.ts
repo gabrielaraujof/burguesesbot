@@ -1,9 +1,9 @@
-import 'dotenv/config';
+import 'dotenv/config'
 
-import createBot from './bot.js';
+import createBot from './bot.js'
 
-const bot = createBot(process.env.BOT_TOKEN ?? '');
-bot.launch();
+const bot = createBot(process.env.BOT_TOKEN ?? '')
+bot.launch()
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', () => bot.stop('SIGINT'))
+process.once('SIGTERM', () => bot.stop('SIGTERM'))
