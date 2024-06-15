@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import ky from 'ky'
 
 import type {
@@ -12,7 +11,6 @@ const FreeGamesPromotionsUrl = process.env.FREE_GAMES_PROMOTIONS_URL ?? ''
 
 export function getFreeGames() {
   console.log('Getting free games promotions')
-  console.log(process.env.FREE_GAMES_PROMOTIONS_URL)
 
   return ky
     .get(FreeGamesPromotionsUrl)

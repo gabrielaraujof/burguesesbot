@@ -27,9 +27,9 @@ jobs:
       SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
-      FREE_GAMES_PROMOTIONS_URL: ${{ secrets.FREE_GAMES_PROMOTIONS_URL }}
-      PRODUCT_STORE_URL: ${{ secrets.PRODUCT_STORE_URL }}
-      OPEN_TRIVIA_DB_URL: ${{ secrets.OPEN_TRIVIA_DB_URL }}
+      FREE_GAMES_PROMOTIONS_URL: ${{ vars.FREE_GAMES_PROMOTIONS_URL }}
+      PRODUCT_STORE_URL: ${{ vars.PRODUCT_STORE_URL }}
+      OPEN_TRIVIA_DB_URL: ${{ vars.OPEN_TRIVIA_DB_URL }}
 
     steps:
       - name: Checkout the repository
@@ -74,9 +74,9 @@ jobs:
       SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       WEBHOOK_SECRET_PATH: ${{ secrets.WEBHOOK_SECRET_PATH }}
-      FREE_GAMES_PROMOTIONS_URL: ${{ secrets.FREE_GAMES_PROMOTIONS_URL }}
-      PRODUCT_STORE_URL: ${{ secrets.PRODUCT_STORE_URL }}
-      OPEN_TRIVIA_DB_URL: ${{ secrets.OPEN_TRIVIA_DB_URL }}
+      FREE_GAMES_PROMOTIONS_URL: ${{ vars.FREE_GAMES_PROMOTIONS_URL }}
+      PRODUCT_STORE_URL: ${{ vars.PRODUCT_STORE_URL }}
+      OPEN_TRIVIA_DB_URL: ${{ vars.OPEN_TRIVIA_DB_URL }}
 
     steps:
       - name: Checkout the repository
