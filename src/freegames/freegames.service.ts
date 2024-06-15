@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import ky from 'ky'
 
 import type {
@@ -5,6 +6,8 @@ import type {
   FreeGamesPromotionsResponse,
 } from './freegames.interface.js'
 import { formatDate, freeGameOnly } from './freegames.helper.js'
+
+
 
 const ProductStoreUrl = process.env.PRODUCT_STORE_URL ?? ''
 const FREE_GAMES_PROMOTIONS_URL = process.env.FREE_GAMES_PROMOTIONS_URL ?? ''
