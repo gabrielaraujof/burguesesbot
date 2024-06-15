@@ -7,16 +7,15 @@ import type {
 } from './freegames.interface.js'
 import { formatDate, freeGameOnly } from './freegames.helper.js'
 
-
-
 const ProductStoreUrl = process.env.PRODUCT_STORE_URL ?? ''
-const FREE_GAMES_PROMOTIONS_URL = process.env.FREE_GAMES_PROMOTIONS_URL ?? ''
+const FreeGamesPromotionsUrl = process.env.FREE_GAMES_PROMOTIONS_URL ?? ''
 
 export function getFreeGames() {
   console.log('Getting free games promotions')
+  console.log(process.env.FREE_GAMES_PROMOTIONS_URL)
 
   return ky
-    .get(FREE_GAMES_PROMOTIONS_URL)
+    .get(FreeGamesPromotionsUrl)
     .then((response) => response.json<FreeGamesPromotionsResponse>())
     .then(({ data }) => data.Catalog.searchStore.elements)
     .then(freeGameOnly)
