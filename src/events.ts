@@ -1,11 +1,8 @@
 import { Input, type Context } from 'telegraf'
 import type { Update } from 'telegraf/types'
 
-import {
-  buildPhotoCaption,
-  getFreeGames,
-} from './freegames/freegames.service.js'
-import { activeCompareFn } from './freegames/freegames.helper.js'
+import { getFreeGames } from './freegames/freegames.service.js'
+import { activeCompareFn, gameCard } from './freegames/freegames.helper.js'
 
 import {
   categoryMenu,
@@ -27,14 +24,14 @@ export const freegame = async (ctx: Context) => {
 
   await Promise.all(
     games.map((game) => {
-      const caption = buildPhotoCaption(game)
+      const { caption, keyboard } = gameCard(game)
       if (game.photo) {
         return ctx.replyWithPhoto(Input.fromURL(game.photo), {
+          ...keyboard,
           caption,
-          parse_mode: 'MarkdownV2',
         })
       } else {
-        return ctx.replyWithMarkdownV2(caption)
+        return ctx.reply(caption, keyboard)
       }
     }),
   )

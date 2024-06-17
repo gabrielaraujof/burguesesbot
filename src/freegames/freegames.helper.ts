@@ -1,3 +1,5 @@
+import { bold, fmt, italic, link } from 'telegraf/format'
+
 import type {
   Element,
   FreeGame,
@@ -5,6 +7,9 @@ import type {
   PromotionalOffer,
   Promotions,
 } from './freegames.interface.js'
+import { Markup } from 'telegraf'
+
+const ProductStoreUrl = process.env.PRODUCT_STORE_URL ?? ''
 
 export const maximumDiscountPercentage =
   (discountPercentage: number) => (promotion: PromotionalOffer) =>
@@ -46,7 +51,7 @@ export function toFreeGame(element: Element): FreeGame | null {
   return {
     state: currentOffer ? 'active' : 'upcoming',
     title: element.title,
-    slug: element.productSlug,
+    slug: element.productSlug ?? element.offerMappings?.[0].pageSlug,
     photo: imageUrl(element.keyImages),
     start: currentOffer?.startDate || upcomingOffer?.startDate,
     end: currentOffer?.endDate || upcomingOffer?.endDate,
@@ -64,9 +69,27 @@ export const activeCompareFn = (a: FreeGame, b: FreeGame) =>
   a.state === 'active' ? -1 : b.state === 'active' ? 1 : 0
 
 export const formatDate = (stringDate: string): string =>
-  new Date(stringDate)
-    .toLocaleDateString('pt-BR', {
-      day: 'numeric',
-      month: 'short',
-    })
-    .replace(/\./, '\\.')
+  new Date(stringDate).toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'short',
+  })
+
+export function gameCard(game: FreeGame) {
+  const startDate = formatDate(game.start)
+  const endDate = formatDate(game.end)
+  const start = game.state === 'active' ? 'Agora' : startDate
+  const caption = fmt`${bold`${game.title.toUpperCase()}`}
+${italic`${start} - ${endDate}`}
+`
+
+  const urlPath = game.slug ? `p/${game.slug}` : 'free-games'
+  const url = `${ProductStoreUrl}/${urlPath}`
+  const buttonText =
+    game.state === 'active' ? `JÁ DISPONÍVEL` : 'EM BREVE'
+  const keyboard = Markup.inlineKeyboard([Markup.button.url(buttonText, url)])
+
+  return {
+    caption,
+    keyboard,
+  }
+}
