@@ -30,6 +30,7 @@ jobs:
       FREE_GAMES_PROMOTIONS_URL: ${{ vars.FREE_GAMES_PROMOTIONS_URL }}
       PRODUCT_STORE_URL: ${{ vars.PRODUCT_STORE_URL }}
       OPEN_TRIVIA_DB_URL: ${{ vars.OPEN_TRIVIA_DB_URL }}
+      VERTEXAI_API_KEY: ${{ secrets.VERTEXAI_API_KEY }}
 
     steps:
       - name: Checkout the repository
@@ -77,6 +78,7 @@ jobs:
       FREE_GAMES_PROMOTIONS_URL: ${{ vars.FREE_GAMES_PROMOTIONS_URL }}
       PRODUCT_STORE_URL: ${{ vars.PRODUCT_STORE_URL }}
       OPEN_TRIVIA_DB_URL: ${{ vars.OPEN_TRIVIA_DB_URL }}
+      VERTEXAI_API_KEY: ${{ secrets.VERTEXAI_API_KEY }}
 
     steps:
       - name: Checkout the repository

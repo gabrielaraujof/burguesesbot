@@ -299,3 +299,12 @@ export function toQuiz(trivia: Trivia): Quiz {
     correctOptionIndex: correctIdx,
   }
 }
+
+export function buildGnerationInput(quiz: Quiz): string {
+  const wrongAnswers = quiz.options
+    .filter((_, idx) => idx !== quiz.correctOptionIndex)
+    .map((op) => `- ${op}`)
+    .join('\n')
+  const correctAnswer = quiz.options[quiz.correctOptionIndex]
+  return `Pergunta: "${quiz.title}"\nRespostas Erradas:\n${wrongAnswers}\nResposta certa: ${correctAnswer}`
+}

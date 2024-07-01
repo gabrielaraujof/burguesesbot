@@ -35,6 +35,7 @@ provider:
     FREE_GAMES_PROMOTIONS_URL: ${env:FREE_GAMES_PROMOTIONS_URL}
     PRODUCT_STORE_URL: ${env:PRODUCT_STORE_URL}
     OPEN_TRIVIA_DB_URL: ${env:OPEN_TRIVIA_DB_URL}
+    VERTEXAI_API_KEY: ${env:VERTEXAI_API_KEY}
 
 plugins:
   - serverless-dotenv-plugin

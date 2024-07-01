@@ -5,12 +5,17 @@ import { getFreeGames } from './freegames/freegames.service.js'
 import { activeCompareFn, gameCard } from './freegames/freegames.helper.js'
 
 import {
+  buildGnerationInput,
   categoryMenu,
   difficultyMenu,
   display,
   mainMenu,
 } from './trivia/trivia.helper.js'
 import { getQuestions } from './trivia/trivia.service.js'
+import './ai/engine.js'
+import { generate } from './ai/engine.js'
+import { triviaExpert } from './ai/system.prompt.js'
+import { text } from './ai/output.js'
 
 export const longweek = async (ctx: Context) => {
   console.log('Answering semanalonga')
@@ -53,10 +58,22 @@ export const onCallbackQuery = async (
 
       if (data.done) {
         const [quiz] = await getQuestions(data)
+        let explanation
+        try {
+          const generatedExplanation = await generate(
+            buildGnerationInput(quiz),
+            triviaExpert,
+          )
+          explanation = text(generatedExplanation)
+        } catch (err) {
+          console.error(err)
+          explanation = undefined
+        }
         await ctx.deleteMessage(ctx.callbackQuery.message?.message_id)
         await ctx.replyWithQuiz(quiz.title, quiz.options, {
           is_anonymous: false,
           correct_option_id: quiz.correctOptionIndex,
+          explanation
         })
       } else {
         switch (data.menu) {
