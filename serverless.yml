@@ -36,6 +36,8 @@ provider:
     PRODUCT_STORE_URL: ${env:PRODUCT_STORE_URL}
     OPEN_TRIVIA_DB_URL: ${env:OPEN_TRIVIA_DB_URL}
     VERTEXAI_API_KEY: ${env:VERTEXAI_API_KEY}
+    DISCORD_BOT_TOKEN: ${env:DISCORD_BOT_TOKEN}
+    DISCORD_GUILD_ID: ${env:DISCORD_GUILD_ID}
 
 plugins:
   - serverless-dotenv-plugin
