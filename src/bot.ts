@@ -1,6 +1,12 @@
 import { Telegraf } from 'telegraf'
 
-import { freegame, longweek, onCallbackQuery, trivia } from './events.js'
+import {
+  freegame,
+  longweek,
+  onCallbackQuery,
+  trivia,
+  whosplaying,
+} from './events.js'
 import { maintenance } from './utils.js'
 
 export default (token: string) => {
@@ -11,7 +17,7 @@ export default (token: string) => {
   bot.command('trivia', trivia)
 
   bot.command('nyvi', maintenance)
-  bot.command('whosplaying', maintenance)
+  bot.command('whosplaying', whosplaying)
 
   bot.on('callback_query', onCallbackQuery)
 

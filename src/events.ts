@@ -14,8 +14,9 @@ import {
 import { getQuestions } from './trivia/trivia.service.js'
 import './ai/engine.js'
 import { generate } from './ai/engine.js'
-import { triviaExpert } from './ai/system.prompt.js'
+import { triviaExpert, whosplayingExpert } from './ai/system.prompt.js'
 import { text } from './ai/output.js'
+import { getOnlineMembers } from './whosplaying/guild.service.js'
 
 export const longweek = async (ctx: Context) => {
   console.log('Answering semanalonga')
@@ -40,6 +41,20 @@ export const freegame = async (ctx: Context) => {
       }
     }),
   )
+}
+
+export const whosplaying = async (ctx: Context) => {
+  const members = await getOnlineMembers()
+  try {
+    const generatedMessage = await generate(
+      JSON.stringify(members),
+      whosplayingExpert,
+    )
+    const message = text(generatedMessage)
+    await ctx.reply(message)
+  } catch (err) {
+    console.error(err)
+  }
 }
 
 export const trivia = async (ctx: Context) => {
@@ -73,7 +88,7 @@ export const onCallbackQuery = async (
         await ctx.replyWithQuiz(quiz.title, quiz.options, {
           is_anonymous: false,
           correct_option_id: quiz.correctOptionIndex,
-          explanation
+          explanation,
         })
       } else {
         switch (data.menu) {
