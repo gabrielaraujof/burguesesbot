@@ -17,6 +17,7 @@ import { generate } from './ai/engine.js'
 import { triviaExpert, whosplayingExpert } from './ai/system.prompt.js'
 import { text } from './ai/output.js'
 import { getOnlineMembers } from './whosplaying/guild.service.js'
+import { whosplayingHistory } from './ai/history.js'
 
 export const longweek = async (ctx: Context) => {
   console.log('Answering semanalonga')
@@ -44,11 +45,12 @@ export const freegame = async (ctx: Context) => {
 }
 
 export const whosplaying = async (ctx: Context) => {
-  const members = await getOnlineMembers()
   try {
+    const members = await getOnlineMembers()
     const generatedMessage = await generate(
       JSON.stringify(members),
       whosplayingExpert,
+      whosplayingHistory,
     )
     const message = text(generatedMessage)
     await ctx.reply(message)

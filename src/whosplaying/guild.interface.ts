@@ -3,7 +3,7 @@ export interface ActivityLite {
   details: string | null
   state: string | null
   party: {
-    size: number[]
+    size: number
   } | null
 }
 

@@ -10,7 +10,11 @@ const toActivityLite = ({
   name,
   details,
   state,
-  party,
+  party: party?.size
+    ? {
+        size: party.size[0],
+      }
+    : null,
 })
 
 export const toMemberLite = ({
