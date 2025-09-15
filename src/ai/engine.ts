@@ -18,7 +18,7 @@ const generationConfig: GenerationConfig = {
 export function generate(input: string, system: string, history?: Content[]) {
   console.log(`Generating text with LLM model...`)
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash',
     systemInstruction: system,
   })
   const chatSession = model.startChat({ generationConfig, history })
