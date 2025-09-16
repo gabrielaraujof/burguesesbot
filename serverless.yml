@@ -45,7 +45,7 @@ plugins:
 functions:
   webhook:
     name: ${sls:stage}-burguesesbot
-    handler: dist/function.handler
+    handler: dist/modules/infra/function.handler
     events:
       - http:
           method: POST

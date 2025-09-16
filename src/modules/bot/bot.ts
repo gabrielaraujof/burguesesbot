@@ -6,8 +6,8 @@ import {
   onCallbackQuery,
   trivia,
   whosplaying,
-} from './events.js'
-import { maintenance } from './utils.js'
+} from '../events/index.js'
+import { maintenance } from '../infra/utils.js'
 
 export default (token: string) => {
   const bot = new Telegraf(token)

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { createWhosplayingController, createLongweekController } from '../src/controllers/events.controllers.js'
-import { MockAiService } from '../src/mocks/ai.mock.js'
-import type { WhosplayingService } from '../src/controllers/events.controllers.js'
+import { createWhosplayingController, createLongweekController } from '../src/modules/infra/controllers/events.controllers.js'
+import { MockAiService } from '../src/modules/infra/mocks/ai.mock.js'
+import type { WhosplayingService } from '../src/modules/infra/controllers/events.controllers.js'
 
 const createMockContext = () => ({
   reply: vi.fn(),

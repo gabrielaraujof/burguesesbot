@@ -1,2 +1,3 @@
-export * from '../../freegames/freegames.helper.js'
-export * from '../../freegames/freegames.service.js'
+export * from './freegames/freegames.helper.js'
+export * from './freegames/freegames.service.js'
+export * from './freegames/freegames.interface.js'
