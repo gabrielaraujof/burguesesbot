@@ -24,17 +24,17 @@ export interface ControllerDependencies {
   whosplayingService: WhosplayingService
 }
 
-import { activeCompareFn, gameCard } from '../freegames/freegames.helper.js'
+import { activeCompareFn, gameCard } from '../../freegames/index.js'
 import {
   buildGnerationInput,
   categoryMenu,
   difficultyMenu,
   display,
   mainMenu,
-} from '../trivia/trivia.helper.js'
-import { triviaExpert, whosplayingExpert } from '../ai/system.prompt.js'
-import { text } from '../ai/output.js'
-import { whosplayingHistory } from '../ai/history.js'
+} from '../../trivia/index.js'
+import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
+import { text } from '../../ai/index.js'
+import { whosplayingHistory } from '../../ai/index.js'
 
 export const createLongweekController = () => {
   return async (ctx: Context) => {

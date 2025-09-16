@@ -1,5 +1,5 @@
-import { createControllers } from './controllers/events.controllers.js'
-import { createServiceAdapters } from './adapters/service.adapters.js'
+import { createControllers } from '../infra/controllers/events.controllers.js'
+import { createServiceAdapters } from '../infra/adapters/service.adapters.js'
 
 const serviceAdapters = createServiceAdapters()
 const controllers = createControllers(serviceAdapters)

@@ -1,7 +1,7 @@
 import http from 'serverless-http'
 import type { Callback, Context, Handler } from 'aws-lambda'
 
-import createBot from './bot.js'
+import { createBot } from '../bot/index.js'
 
 let proxy: Handler
 

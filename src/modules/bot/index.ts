@@ -1,1 +1,1 @@
-export { default as createBot } from '../../bot.js'
+export { default as createBot } from './bot.js'

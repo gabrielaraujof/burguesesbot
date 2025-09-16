@@ -1,7 +1,7 @@
-import { generate } from '../ai/engine.js'
-import { getFreeGames } from '../freegames/freegames.service.js'
-import { getQuestions } from '../trivia/trivia.service.js'
-import { getOnlineMembers } from '../whosplaying/guild.service.js'
+import { generate } from '../../ai/index.js'
+import { getFreeGames } from '../../freegames/index.js'
+import { getQuestions } from '../../trivia/index.js'
+import { getOnlineMembers } from '../../whosplaying/index.js'
 import type { 
   AiService, 
   FreeGamesService, 
