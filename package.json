@@ -7,8 +7,9 @@
   "scripts": {
     "dev": "nodemon",
     "develop": "node --import @swc-node/register/esm-register ./src/index.ts",
-    "test": "echo Teste",
-    "test:cov": "echo Teste coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "lint": "echo lint",
     "build": "swc ./src -q -d dist --strip-leading-paths"
   },
@@ -31,10 +32,12 @@
     "@swc/cli": "^0.7.8",
     "@swc/core": "^1.13.5",
     "@types/aws-lambda": "^8.10.152",
+    "@types/node": "^24.5.0",
     "aws-lambda": "^1.0.7",
     "nodemon": "^3.1.10",
     "serverless": "^4.18.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
