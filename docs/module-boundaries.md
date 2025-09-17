@@ -42,16 +42,17 @@ Modules
 - Public API:
   - Controllers factory: `createControllers(deps)`
   - Adapters factories: `createServiceAdapters()`, `createDevServiceAdapters()`
-  - Types: `AiService`, `FreeGamesService`, `TriviaService`, `WhosplayingService`, `ControllerDependencies`
+    - Types: `AiProvider`, `FreeGamesService`, `TriviaService`, `WhosplayingService`, `ControllerDependencies`
   - Utils: `maintenance(ctx)`
 
 4) modules/ai
 - Purpose: LLM generation and helpers.
 - Files: `src/modules/ai/ai/engine.ts`, `src/modules/ai/ai/output.ts`, `src/modules/ai/ai/history.ts`, `src/modules/ai/ai/system.prompt.ts`, `src/modules/ai/index.ts`
 - Public API:
-  - `generate(input: string, system: string, history?: Content[]): Promise<GenerateContentResult>`
-  - `text(result: GenerateContentResult): string`
-  - `whosplayingHistory: Content[]`
+  - `AiProvider` (port interface), `ChatMessage`, `CommonGenerationConfig`, `AiResponse`
+  - `generate(input: string, system: string, history?: Content[]): Promise<GenerateContentResult>` (adapter-internal)
+  - `text(result: GenerateContentResult): string` (adapter-internal)
+  - `whosplayingHistory: ChatMessage[]`
   - `triviaExpert: string`, `whosplayingExpert: string`
 
 5) modules/freegames

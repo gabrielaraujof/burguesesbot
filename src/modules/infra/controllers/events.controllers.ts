@@ -1,9 +1,7 @@
 import { Input, type Context } from 'telegraf'
 import type { Update } from 'telegraf/types'
 
-export interface AiService {
-  generate(input: string, systemPrompt: string, history?: any[]): Promise<any>
-}
+import type { AiProvider } from '../../ai/index.js'
 
 export interface FreeGamesService {
   getFreeGames(): Promise<any[]>
@@ -18,7 +16,7 @@ export interface WhosplayingService {
 }
 
 export interface ControllerDependencies {
-  aiService: AiService
+  aiProvider: AiProvider
   freeGamesService: FreeGamesService
   triviaService: TriviaService
   whosplayingService: WhosplayingService
@@ -33,7 +31,6 @@ import {
   mainMenu,
 } from '../../trivia/index.js'
 import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
-import { text } from '../../ai/index.js'
 import { whosplayingHistory } from '../../ai/index.js'
 
 export const createLongweekController = () => {
@@ -66,18 +63,16 @@ export const createFreegameController = (deps: { freeGamesService: FreeGamesServ
 }
 
 export const createWhosplayingController = (deps: { 
-  aiService: AiService
+  aiProvider: AiProvider
   whosplayingService: WhosplayingService 
 }) => {
   return async (ctx: Context) => {
     try {
       const members = await deps.whosplayingService.getOnlineMembers()
-      const generatedMessage = await deps.aiService.generate(
+      const { text: message } = await deps.aiProvider.generate(
         JSON.stringify(members),
-        whosplayingExpert,
-        whosplayingHistory,
+        { system: whosplayingExpert, history: whosplayingHistory },
       )
-      const message = text(generatedMessage)
       await ctx.reply(message)
     } catch (err) {
       console.error(err)
@@ -93,7 +88,7 @@ export const createTriviaController = () => {
 }
 
 export const createCallbackQueryController = (deps: {
-  aiService: AiService
+  aiProvider: AiProvider
   triviaService: TriviaService
 }) => {
   return async (ctx: Context<Update.CallbackQueryUpdate>) => {
@@ -107,11 +102,11 @@ export const createCallbackQueryController = (deps: {
           const [quiz] = await deps.triviaService.getQuestions(data)
           let explanation
           try {
-            const generatedExplanation = await deps.aiService.generate(
+            const { text } = await deps.aiProvider.generate(
               buildGnerationInput(quiz),
-              triviaExpert,
+              { system: triviaExpert },
             )
-            explanation = text(generatedExplanation)
+            explanation = text
           } catch (err) {
             console.error(err)
             explanation = undefined
@@ -147,12 +142,12 @@ export const createControllers = (dependencies: ControllerDependencies) => {
     longweek: createLongweekController(),
     freegame: createFreegameController({ freeGamesService: dependencies.freeGamesService }),
     whosplaying: createWhosplayingController({ 
-      aiService: dependencies.aiService,
+      aiProvider: dependencies.aiProvider,
       whosplayingService: dependencies.whosplayingService 
     }),
     trivia: createTriviaController(),
     onCallbackQuery: createCallbackQueryController({
-      aiService: dependencies.aiService,
+      aiProvider: dependencies.aiProvider,
       triviaService: dependencies.triviaService
     })
   }

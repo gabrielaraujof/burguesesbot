@@ -16,9 +16,9 @@ Purpose: give an AI coding agent the minimal, concrete knowledge to be productiv
 
 - How the architecture works
   - Dependency flow: `createServiceAdapters()` → `createControllers(adapters)` → `createEvents(controllers)` → `createBotWithDeps(token, deps)` registers events → run bot.
-  - `createBot(token)` uses production adapters; `createDevBot(token)` swaps in `MockAiService` (others real) for local/testing.
+  - `createBot(token)` uses production adapters; `createDevBot(token)` swaps in `MockAiProvider` (others real) for local/testing.
   - Testing: Controllers are testable with mock services (see `tests/controllers.test.ts`, `src/modules/infra/mocks/ai.mock.ts`).
-  - AI usage unchanged: `generate()` returns `GenerateContentResult`, use `text(result)` to extract.
+  - AI provider port: Controllers depend on `AiProvider` (provider-agnostic). Adapters wrap the SDK using `generate()` and `text()` internally and return `{ text }`.
 
 - Important conventions and gotchas
   1. ESM + TypeScript: `package.json` has `"type": "module"`. Keep `.js` extensions on all relative imports so Node ESM resolves compiled files in `dist/`.
@@ -83,7 +83,8 @@ Purpose: give an AI coding agent the minimal, concrete knowledge to be productiv
       return bot
     }
     ```
-  - AI usage pattern: build prompt input → `generate(input, system, history?)` → `text(result)` → reply.
+  - AI usage pattern (controllers): build prompt input → `aiProvider.generate(input, { system, history? })` → use `AiResponse.text` → reply.
+  - AI usage pattern (adapters): map neutral types to provider SDK → call `generate()`/chat with `systemInstruction` and `history` → map back with `text(result)`.
   - Testing pattern: use interfaces and mocks (`src/modules/infra/mocks/ai.mock.ts`) to test controllers in isolation.
 
 - Where to look when changing behavior
@@ -91,13 +92,14 @@ Purpose: give an AI coding agent the minimal, concrete knowledge to be productiv
   - Business logic: `src/modules/infra/controllers/events.controllers.ts` (testable, DI-driven).
   - Service integration: `src/modules/infra/adapters/service.adapters.ts` (adapters + dev adapters).
   - Domains: `src/modules/freegames/*`, `src/modules/trivia/*`, `src/modules/whosplaying/*`.
-  - LLM adjustments: `src/modules/ai/ai/engine.ts`, `system.prompt.ts`, `history.ts`.
+  - AI port and types: `src/modules/ai/ai/provider.interface.ts` (AiProvider, ChatMessage, CommonGenerationConfig, AiResponse).
+  - LLM adjustments: `src/modules/ai/ai/engine.ts`, `system.prompt.ts`, `history.ts` (history uses provider-agnostic `ChatMessage[]`).
   - Lambda/webhook: `src/modules/infra/function.ts` and `serverless.yml`.
 
 - Tests & linting
   - Vitest with TS support (`vitest.config.ts`).
   - Run tests: `npm test`, `npm run test:watch`, `npm run test:cov`.
-  - Mocks: `src/modules/infra/mocks/*.mock.ts`.
+  - Mocks: `src/modules/infra/mocks/*.mock.ts` (e.g., `MockAiProvider`).
 
 - Safety and secrets
   - Do not commit API keys. Use `serverless.yml` and dotenv to wire env values in CI/deploy. `serverless-dotenv-plugin` is configured.

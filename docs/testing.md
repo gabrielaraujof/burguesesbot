@@ -33,13 +33,15 @@ Tests the refactored event controllers that now use dependency injection:
 
 ### Mock Services
 
-#### MockAiService (`src/modules/infra/mocks/ai.mock.ts`)
+#### MockAiProvider (`src/modules/infra/mocks/ai.mock.ts`)
 
-Provides predictable AI responses for testing:
+Provider-agnostic AI mock returning plain text via `AiResponse`:
 
 ```typescript
-const mockAi = new MockAiService()
-mockAi.setMockResponse('input', { response: { text: () => 'output' } })
+const mockAi = new MockAiProvider()
+mockAi.setMockResponse('input', 'output')
+// controller deps
+const controller = createWhosplayingController({ aiProvider: mockAi, whosplayingService })
 ```
 
 ## Architecture Benefits
@@ -49,7 +51,7 @@ The refactored controllers now:
 1. **Accept injected dependencies** instead of importing services directly
 2. **Are easily testable** with mock services
 3. **Maintain identical behavior** to the original implementation
-4. **Support different service implementations** (real vs mock)
+4. **Support different provider implementations** (real vs mock) behind `AiProvider`
 
 ## Adding New Tests
 
