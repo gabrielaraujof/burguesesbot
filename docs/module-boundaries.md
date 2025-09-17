@@ -1,74 +1,87 @@
 # Module boundaries and public APIs
 
-This document inventories the current source files and defines the public API surface for each logical module under `src/modules/`.
+This document inventories the source files and defines the public API surface for each logical module under `src/modules/` after the DI factory refactor.
 
 Goal
-- Provide a clear mapping from existing files to module folders under `src/modules/`.
-- Define exported public API (functions, types) for each module so callers rely only on these contracts.
-- Provide a migration-safe wrapper (module index files) that re-exports current functions. This allows a gradual move of implementations into the module folder in later PRs.
+- Map files to module folders under `src/modules/`.
+- Define exported public API (functions, types) so callers rely only on these contracts.
+- Keep `.js` extensions on relative imports for Node ESM runtime.
 
 Conventions
-- Keep local relative imports with `.js` extensions in TypeScript sources (matches existing repo convention).
+- Local relative imports include `.js` extensions.
 - Module index files live under `src/modules/<name>/index.ts` and re-export a curated public API.
 
 Modules
 
 1) modules/bot
-- Purpose: create and configure the Telegraf bot instance.
-- Files (bridging): `src/bot.ts`
+- Purpose: create and configure the Telegraf bot instance using dependency injection.
+- Files: `src/modules/bot/bot.ts`, `src/modules/bot/index.ts`
 - Public API:
-  - `default export`: `(token: string) => Telegraf`
+  - `createBotWithDeps(token: string, deps: ControllerDependencies): Telegraf`
+  - `createBot(token: string): Telegraf` (production adapters)
+  - `createDevBot(token: string): Telegraf` (mock AI + real services)
 
 2) modules/events
-- Purpose: command handlers / controllers for Telegram commands and callback queries.
-- Files: `src/events.ts`
+- Purpose: expose command handlers constructed from injected controllers.
+- Files: `src/modules/events/events.ts`, `src/modules/events/index.ts`
 - Public API:
-  - `longweek(ctx: Context): Promise<void>`
-  - `freegame(ctx: Context): Promise<void>`
-  - `trivia(ctx: Context): Promise<void>`
-  - `whosplaying(ctx: Context): Promise<void>`
-  - `onCallbackQuery(ctx: Context<Update.CallbackQueryUpdate>): Promise<void>`
+  - `createEvents(dependencies: ControllerDependencies)` returning:
+    - `longweek(ctx: Context): Promise<void>`
+    - `freegame(ctx: Context): Promise<void>`
+    - `trivia(ctx: Context): Promise<void>`
+    - `whosplaying(ctx: Context): Promise<void>`
+    - `onCallbackQuery(ctx: Context<Update.CallbackQueryUpdate>): Promise<void>`
 
-3) modules/ai
-- Purpose: LLM generation port and helpers.
-- Files: `src/ai/engine.ts`, `src/ai/output.ts`, `src/ai/history.ts`, `src/ai/system.prompt.ts`
+3) modules/infra (controllers, adapters, utils)
+- Purpose: orchestration and DI wiring surfaces.
+- Files:
+  - Controllers: `src/modules/infra/controllers/events.controllers.ts`
+  - Adapters: `src/modules/infra/adapters/service.adapters.ts`
+  - Mocks: `src/modules/infra/mocks/ai.mock.ts`
+  - Utils: `src/modules/infra/utils.ts`
+- Public API:
+  - Controllers factory: `createControllers(deps)`
+  - Adapters factories: `createServiceAdapters()`, `createDevServiceAdapters()`
+  - Types: `AiService`, `FreeGamesService`, `TriviaService`, `WhosplayingService`, `ControllerDependencies`
+  - Utils: `maintenance(ctx)`
+
+4) modules/ai
+- Purpose: LLM generation and helpers.
+- Files: `src/modules/ai/ai/engine.ts`, `src/modules/ai/ai/output.ts`, `src/modules/ai/ai/history.ts`, `src/modules/ai/ai/system.prompt.ts`, `src/modules/ai/index.ts`
 - Public API:
   - `generate(input: string, system: string, history?: Content[]): Promise<GenerateContentResult>`
   - `text(result: GenerateContentResult): string`
   - `whosplayingHistory: Content[]`
   - `triviaExpert: string`, `whosplayingExpert: string`
 
-4) modules/freegames
+5) modules/freegames
 - Purpose: fetch and format free game promotions
-- Files: `src/freegames/freegames.service.ts`, `src/freegames/freegames.helper.ts`, `src/freegames/freegames.interface.ts`
+- Files: `src/modules/freegames/freegames/*`, `src/modules/freegames/index.ts`
 - Public API:
   - `getFreeGames(): Promise<FreeGame[]>`
   - Helpers (pure): `freeOffers`, `toFreeGame`, `freeGameOnly`, `activeCompareFn`, `formatDate`, `gameCard`
 
-5) modules/trivia
+6) modules/trivia
 - Purpose: trivia question retrieval and UI helper builders
-- Files: `src/trivia/trivia.service.ts`, `src/trivia/trivia.helper.ts`, `src/trivia/trivia.interface.ts`
+- Files: `src/modules/trivia/trivia/*`, `src/modules/trivia/index.ts`
 - Public API:
   - `getQuestions(opts): Promise<Quiz[]>`
   - `display(opts?): string`
   - `mainMenu(opts?): Markup`
   - `categoryMenu`, `difficultyMenu`, `toQuiz`, `buildGnerationInput`
 
-6) modules/whosplaying
+7) modules/whosplaying
 - Purpose: Discord guild presence adapter and helpers
-- Files: `src/whosplaying/guild.service.ts`, `src/whosplaying/guild.helper.ts`, `src/whosplaying/guild.interface.ts`
+- Files: `src/modules/whosplaying/whosplaying/*`, `src/modules/whosplaying/index.ts`
 - Public API:
   - `getOnlineMembers(): Promise<MemberLite[]>`
   - `toMemberLite`, `isPlaying`, `isOnline`, `hasRole`, `getRoleByName`
 
-7) modules/utils
-- Purpose: misc utilities used by the bot
-- Files: `src/utils.ts`
-- Public API (example): `maintenance` (a command handler)
+8) modules/infra/function (lambda)
+- Purpose: serverless webhook entrypoint
+- Files: `src/modules/infra/function.ts`
+- Public API:
+  - `handler(event, context, cb)`
 
-Migration notes
-- These module index files are intentionally non-invasive: they re-export existing implementations (no behaviour change). Later work should move implementations into `src/modules/<name>/` and update these re-exports to keep the public API stable.
-
-Next steps
-- Create DI factory to inject adapters (AI, Discord, HTTP client) and refactor `src/events.ts` into per-module controllers that receive ports (see milestone #31).
-- Implement AI provider port and mock adapters (see milestone #32).
+Notes
+- `src/index.ts` selects `createBot` (prod) or `createDevBot` (dev) based on `USE_MOCKS=true` and calls `bot.launch()` for long polling.

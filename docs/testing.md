@@ -1,6 +1,6 @@
 # Testing Guide
 
-This document describes the testing setup for BurguesesBot after the controller refactor.
+This document describes the testing setup for BurguesesBot after the DI factory refactor.
 
 ## Testing Framework
 
@@ -25,7 +25,7 @@ npm run test:cov
 
 ### Controllers Tests (`tests/controllers.test.ts`)
 
-Tests the refactored event handlers that now use dependency injection:
+Tests the refactored event controllers that now use dependency injection:
 
 - **WhosplayingController**: Tests AI integration with mock services
 - **LongweekController**: Tests simple response handling
@@ -33,7 +33,7 @@ Tests the refactored event handlers that now use dependency injection:
 
 ### Mock Services
 
-#### MockAiService (`src/mocks/ai.mock.ts`)
+#### MockAiService (`src/modules/infra/mocks/ai.mock.ts`)
 
 Provides predictable AI responses for testing:
 
