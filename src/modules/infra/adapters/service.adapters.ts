@@ -8,6 +8,7 @@ import type {
   TriviaService, 
   WhosplayingService 
 } from '../controllers/events.controllers.js'
+import { MockAiService } from '../mocks/ai.mock.js'
 
 export class AiServiceAdapter implements AiService {
   async generate(input: string, systemPrompt: string, history?: any[]): Promise<any> {
@@ -39,5 +40,14 @@ export const createServiceAdapters = () => {
     freeGamesService: new FreeGamesServiceAdapter(),
     triviaService: new TriviaServiceAdapter(),
     whosplayingService: new WhosplayingServiceAdapter()
+  }
+}
+
+export const createDevServiceAdapters = () => {
+  return {
+    aiService: new MockAiService(),
+    freeGamesService: new FreeGamesServiceAdapter(),
+    triviaService: new TriviaServiceAdapter(),
+    whosplayingService: new WhosplayingServiceAdapter(),
   }
 }

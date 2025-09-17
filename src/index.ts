@@ -1,8 +1,9 @@
 import 'dotenv/config'
 
-import { createBot } from './modules/bot/index.js'
+import { createBot, createDevBot } from './modules/bot/index.js'
 
-const bot = createBot(process.env.BOT_TOKEN ?? '')
+const useMocks = (process.env.USE_MOCKS ?? 'false').toLowerCase() === 'true'
+const bot = (useMocks ? createDevBot : createBot)(process.env.BOT_TOKEN ?? '')
 bot.launch()
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
