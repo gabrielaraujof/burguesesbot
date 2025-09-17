@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createWhosplayingController, createLongweekController } from '../src/modules/infra/controllers/events.controllers.js'
-import { MockAiService } from '../src/modules/infra/mocks/ai.mock.js'
+import { MockAiProvider } from '../src/modules/infra/mocks/ai.mock.js'
 import type { WhosplayingService } from '../src/modules/infra/controllers/events.controllers.js'
 
 const createMockContext = () => ({
@@ -17,15 +17,15 @@ const createMockWhosplayingService = (): WhosplayingService => ({
 
 describe('Event Controllers', () => {
   describe('WhosplayingController', () => {
-    let mockAiService: MockAiService
+  let mockAiProvider: MockAiProvider
     let mockWhosplayingService: WhosplayingService
     let controller: ReturnType<typeof createWhosplayingController>
 
     beforeEach(() => {
-      mockAiService = new MockAiService()
+      mockAiProvider = new MockAiProvider()
       mockWhosplayingService = createMockWhosplayingService()
       controller = createWhosplayingController({
-        aiService: mockAiService,
+        aiProvider: mockAiProvider,
         whosplayingService: mockWhosplayingService
       })
     })
@@ -35,12 +35,10 @@ describe('Event Controllers', () => {
       const mockMembers = [
         { displayName: 'User1', username: 'user1', activities: [{ name: 'Playing Game' }] }
       ]
-      const mockAiResponse = {
-        response: { text: () => 'User1 is playing Game!' }
-      }
+      const mockAiResponseText = 'User1 is playing Game!'
 
       vi.mocked(mockWhosplayingService.getOnlineMembers).mockResolvedValue(mockMembers)
-      mockAiService.setMockResponse(JSON.stringify(mockMembers), mockAiResponse)
+  mockAiProvider.setMockResponse(JSON.stringify(mockMembers), mockAiResponseText)
 
       await controller(mockContext as any)
 

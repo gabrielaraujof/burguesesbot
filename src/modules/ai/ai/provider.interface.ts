@@ -1,0 +1,28 @@
+export type Role = 'system' | 'user' | 'assistant'
+
+export type ChatMessage = {
+  role: Role
+  content: string
+}
+
+export type CommonGenerationConfig = {
+  temperature?: number
+  topP?: number
+  topK?: number
+  maxTokens?: number
+  stopSequences?: string[]
+}
+
+export type GenerateOptions = {
+  system?: string
+  history?: ChatMessage[]
+  config?: CommonGenerationConfig
+}
+
+export type AiResponse = {
+  text: string
+}
+
+export interface AiProvider {
+  generate(input: string, options?: GenerateOptions): Promise<AiResponse>
+}

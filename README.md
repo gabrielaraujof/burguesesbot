@@ -73,6 +73,12 @@ npm run test:cov   # with coverage
 
 Controllers are tested with mock services (see `src/modules/infra/mocks/ai.mock.ts`).
 
+### AI provider port
+
+- Controllers depend on a provider-agnostic `AiProvider` returning `{ text }`.
+- Adapters map neutral `ChatMessage[]` and simple `CommonGenerationConfig` to the underlying SDK and extract text internally.
+- History helpers like `whosplayingHistory` are provider-agnostic.
+
 ## License
 
 [MIT](LICENSE)
