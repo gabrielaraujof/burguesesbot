@@ -1,11 +1,13 @@
 import { createControllers } from '../infra/controllers/events.controllers.js'
-import { createServiceAdapters } from '../infra/adapters/service.adapters.js'
+import type { ControllerDependencies } from '../infra/controllers/events.controllers.js'
 
-const serviceAdapters = createServiceAdapters()
-const controllers = createControllers(serviceAdapters)
-
-export const longweek = controllers.longweek
-export const freegame = controllers.freegame
-export const whosplaying = controllers.whosplaying
-export const trivia = controllers.trivia
-export const onCallbackQuery = controllers.onCallbackQuery
+export const createEvents = (dependencies: ControllerDependencies) => {
+	const controllers = createControllers(dependencies)
+	return {
+		longweek: controllers.longweek,
+		freegame: controllers.freegame,
+		whosplaying: controllers.whosplaying,
+		trivia: controllers.trivia,
+		onCallbackQuery: controllers.onCallbackQuery,
+	}
+}
