@@ -54,7 +54,7 @@ const { text } = await mockAi.generate('some input', { system: 'sys' })
 // text -> e.g. mock:3fae9c1b7d2a4f10 (hex hash prefix)
 ```
 
-This guarantees the same inputs always yield the same mock output, removing randomness from tests while keeping responses compact.
+This guarantees the same inputs always yield the same mock output (stable object key ordering via custom serializer), removing randomness from tests while keeping responses compact.
 
 ## Architecture Benefits
 
