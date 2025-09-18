@@ -1,5 +1,6 @@
-import type { FreeGamesPromotionsResponse } from './freegames.interface.js'
+import type { FreeGamesPromotionsResponse, FreeGame } from './freegames.interface.js'
 
 export interface FreeGamesProvider {
   getPromotions(): Promise<FreeGamesPromotionsResponse>
+  getFreeGames(): Promise<FreeGame[]>
 }

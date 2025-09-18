@@ -1,4 +1,4 @@
-import type { CategoryId, Difficulty, TriviaResponse } from './trivia.interface.js'
+import type { CategoryId, Difficulty, Quiz } from './trivia.interface.js'
 
 export type GetQuestionsParams = {
   amount?: number
@@ -7,5 +7,5 @@ export type GetQuestionsParams = {
 }
 
 export interface TriviaProvider {
-  getQuestions(params: GetQuestionsParams): Promise<TriviaResponse>
+  getQuestions(params: GetQuestionsParams): Promise<Quiz[]>
 }
