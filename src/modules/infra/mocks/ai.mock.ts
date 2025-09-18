@@ -44,12 +44,15 @@ export class MockAiProvider implements AiProvider {
       return { text: this.mockResponses.get(input)! }
     }
     const system = options?.system || ''
+    const isRoleContentMsg = (m: any): m is { role: string; content: string } =>
+      m && typeof m.role === 'string' && typeof m.content === 'string'
     const historyKey = options?.history
-      ?.filter(m => m.role !== 'system')
+      ?.filter(isRoleContentMsg)
+      .filter(m => m.role !== 'system')
       .map(m => `${m.role}:${m.content}`)
       .join('|') || ''
     const configKey = options?.config ? JSON.stringify(options.config) : ''
-    const composite = [input, system, historyKey, configKey].join('§')
+    const composite = JSON.stringify([input, system, historyKey, configKey])
     const hash = crypto.createHash('sha256').update(composite).digest('hex').slice(0, 16)
     return { text: `mock:${hash}` }
   }
