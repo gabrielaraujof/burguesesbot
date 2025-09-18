@@ -56,18 +56,33 @@ const controller = (deps: { ai: AiProvider }) => async (ctx: Context) => {
 
 ## Adapters
 
-Implementations can wrap concrete SDKs (e.g., Google Generative AI):
+An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The production implementation is `VertexAiProviderAdapter` (Google Generative AI / Gemini) which handles:
+
+1. Mapping `ChatMessage[]` (user/assistant roles) to vendor `Content[]` (user/model).
+2. Mapping `system` → `systemInstruction`.
+3. Translating `CommonGenerationConfig` → vendor `GenerationConfig` (temperature, topP, topK, maxTokens, stopSequences).
+4. Enforcing a timeout (`AI_TIMEOUT_MS`, default 10s) via an `AbortController` pattern.
+5. Normalizing errors to an `AiError` with codes: `timeout`, `rate_limited`, `unauthorized`, `blocked`, `network`, `internal`.
+6. Light exponential backoff retry for transient `rate_limited` and `network` errors.
+
+Example (abridged) — details live in `src/modules/infra/adapters/service.adapters.ts`:
 
 ```ts
-class VertexAiProvider implements AiProvider {
-  async generate(input: string, { system, history, config }: GenerateOptions = {}) {
-    // Map neutral types -> provider types, call SDK, then map back to AiResponse
-    const result = await generate(input, system ?? '', /* map history to vendor */ undefined)
+class VertexAiProviderAdapter implements AiProvider {
+  async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
+    const history = options?.history ? mapHistory(options.history) : undefined
+    const config = buildGenerationConfig(options?.config)
+    const result = await withTimeout(() => sdkSend(modelArgs), timeoutMs)
     return { text: text(result) }
   }
 }
 ```
 
+## Error Handling
+
+Errors are wrapped in `AiError` where `error.code` is one of the enumerated codes. Callers (controllers) currently log and proceed; future enhancements (#57) will surface richer metadata / streaming.
+
 ## Notes
-- Keep `.js` extensions in imports inside `.ts` sources for Node ESM.
-- Adapters should use `text(result)` internally; controllers receive `AiResponse.text` only.
+- Keep `.js` extensions in all relative imports (ESM runtime resolution).
+- Only the adapter touches vendor SDK types; controllers stay provider-agnostic.
+- Use `AiResponse.text` only in higher layers to keep the contract stable.
