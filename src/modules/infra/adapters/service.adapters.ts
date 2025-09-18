@@ -1,4 +1,4 @@
-import { generate, text } from '../../ai/index.js'
+import { text } from '../../ai/index.js'
 import { getFreeGames } from '../../freegames/index.js'
 import { getQuestions } from '../../trivia/index.js'
 import { getOnlineMembers } from '../../whosplaying/index.js'
@@ -7,24 +7,12 @@ import type {
   TriviaService, 
   WhosplayingService 
 } from '../controllers/events.controllers.js'
-import { MockAiService, MockAiProvider } from '../mocks/ai.mock.js'
+import { MockAiProvider } from '../mocks/ai.mock.js'
 import type { AiProvider, GenerateOptions, ChatMessage, AiResponse } from '../../ai/index.js'
 import type { Content, GenerationConfig } from '@google/generative-ai'
 import { AiError } from '../../ai/index.js'
 
-// Temporary legacy interface pending removal (#58)
-export interface AiService {
-  generate(input: string, systemPrompt: string, history?: any[]): Promise<any>
-}
 import { GoogleGenerativeAI } from '@google/generative-ai'
-
-export class AiServiceAdapter implements AiService {
-  async generate(input: string, systemPrompt: string, history?: any[]): Promise<any> {
-    return generate(input, systemPrompt, history)
-  }
-}
-
-// Backwards compatibility adapter still used by legacy AiServiceAdapter above.
 
 export class VertexAiProviderAdapter implements AiProvider {
   private readonly client: GoogleGenerativeAI
@@ -180,7 +168,6 @@ export class WhosplayingServiceAdapter implements WhosplayingService {
 
 export const createServiceAdapters = () => {
   return {
-    aiService: new AiServiceAdapter(),
     aiProvider: new VertexAiProviderAdapter(),
     freeGamesService: new FreeGamesServiceAdapter(),
     triviaService: new TriviaServiceAdapter(),
@@ -190,7 +177,6 @@ export const createServiceAdapters = () => {
 
 export const createDevServiceAdapters = () => {
   return {
-    aiService: new MockAiService(),
     aiProvider: new MockAiProvider(),
     freeGamesService: new FreeGamesServiceAdapter(),
     triviaService: new TriviaServiceAdapter(),
