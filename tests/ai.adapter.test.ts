@@ -10,6 +10,11 @@ vi.mock('@google/generative-ai', () => {
     config: any
     constructor(private _options: any) {}
     startChat(opts: any) {
+      // expose for assertions
+      ;(globalThis as any).__geminiMock = {
+        lastModelOptions: this._options,
+        lastStartChatArgs: opts
+      }
       this.history = opts.history
       this.config = opts.generationConfig
       return {
@@ -65,6 +70,12 @@ describe('VertexAiProviderAdapter', () => {
       ]
     })
     expect(text).toBe('Echo: hello')
+    const captured = (globalThis as any).__geminiMock
+    expect(captured.lastModelOptions.systemInstruction).toBe('You are a test system')
+    const hist = captured.lastStartChatArgs.history
+    expect(hist.length).toBe(2)
+    expect(hist[0]).toMatchObject({ role: 'user', parts: [{ text: 'Hi' }] })
+    expect(hist[1]).toMatchObject({ role: 'model', parts: [{ text: 'Hello there' }] })
   })
 
   it('maps config values', async () => {
@@ -72,8 +83,14 @@ describe('VertexAiProviderAdapter', () => {
     await adapter.generate('config test', {
       config: { temperature: 0.1, topP: 0.9, topK: 50, maxTokens: 42, stopSequences: ['STOP'] }
     })
-    // If no throw, mapping succeeded. (Could extend mock to capture config if deeper assertion needed.)
-    expect(true).toBe(true)
+    const captured = (globalThis as any).__geminiMock
+    expect(captured.lastStartChatArgs.generationConfig).toMatchObject({
+      temperature: 0.1,
+      topP: 0.9,
+      topK: 50,
+      maxOutputTokens: 42,
+      stopSequences: ['STOP']
+    })
   })
 
   it('normalizes unauthorized error', async () => {
