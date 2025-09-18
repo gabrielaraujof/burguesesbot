@@ -58,6 +58,19 @@ export class MockAiProvider implements AiProvider {
     this.mockResponses.set(input, response)
   }
 
+  private buildHistoryKey(history?: any[]): string {
+    if (!history || history.length === 0) return ''
+    const isRoleContentMsg = (m: any): m is { role: string; content: string } =>
+      m && typeof m.role === 'string' && typeof m.content === 'string'
+    return (
+      history
+        .filter(isRoleContentMsg)
+        .filter((m) => m.role !== 'system')
+        .map((m) => `${m.role}:${m.content}`)
+        .join('|') || ''
+    )
+  }
+
   async generate(
     input: string,
     options?: GenerateOptions,
@@ -66,14 +79,7 @@ export class MockAiProvider implements AiProvider {
       return { text: this.mockResponses.get(input)! }
     }
     const system = options?.system || ''
-    const isRoleContentMsg = (m: any): m is { role: string; content: string } =>
-      m && typeof m.role === 'string' && typeof m.content === 'string'
-    const historyKey =
-      options?.history
-        ?.filter(isRoleContentMsg)
-        .filter((m) => m.role !== 'system')
-        .map((m) => `${m.role}:${m.content}`)
-        .join('|') || ''
+    const historyKey = this.buildHistoryKey(options?.history)
     const configKey = options?.config
       ? this.stableSerialize(options.config)
       : ''
