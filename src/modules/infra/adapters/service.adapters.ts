@@ -109,16 +109,14 @@ export class VertexAiProviderAdapter implements AiProvider {
   }
 
   private async callWithTimeout<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
-    const controller = new AbortController()
     let timeoutHandle: any
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutHandle = setTimeout(() => {
-        controller.abort()
         reject(new AiError('AI request timed out', 'timeout'))
       }, timeoutMs)
     })
     try {
-      // The underlying SDK does not currently accept AbortSignal directly in our wrapper; abort is informational.
+      // The underlying SDK does not currently accept AbortSignal directly in our wrapper.
       return await Promise.race([fn(), timeoutPromise]) as T
     } finally {
       clearTimeout(timeoutHandle)

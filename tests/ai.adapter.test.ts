@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import { VertexAiProviderAdapter } from '../src/modules/infra/adapters/service.adapters.js'
 import { AiError } from '../src/modules/ai/index.js'
 
@@ -41,9 +41,14 @@ vi.mock('@google/generative-ai', () => {
   return { GoogleGenerativeAI }
 })
 
-// shorten default timeout for tests
-process.env.AI_TIMEOUT_MS = '10'
-process.env.VERTEXAI_API_KEY = 'test-key'
+beforeAll(() => {
+  vi.stubEnv('AI_TIMEOUT_MS', '10')
+  vi.stubEnv('VERTEXAI_API_KEY', 'test-key')
+})
+
+afterAll(() => {
+  vi.unstubAllEnvs()
+})
 
 // utility to wait micro tasks
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
