@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createWhosplayingController, createLongweekController } from '../src/modules/infra/controllers/events.controllers.js'
 import { MockAiProvider } from '../src/modules/infra/mocks/ai.mock.js'
+import { whosplayingExpert, whosplayingHistory } from '../src/modules/ai/index.js'
 import type { WhosplayingService } from '../src/modules/infra/controllers/events.controllers.js'
 
 const createMockContext = () => ({
@@ -30,7 +31,7 @@ describe('Event Controllers', () => {
       })
     })
 
-    it('should handle whosplaying command successfully', async () => {
+    it('should handle whosplaying command successfully and call AI with expected shape', async () => {
       const mockContext = createMockContext()
       const mockMembers = [
         { displayName: 'User1', username: 'user1', activities: [{ name: 'Playing Game' }] }
@@ -38,12 +39,17 @@ describe('Event Controllers', () => {
       const mockAiResponseText = 'User1 is playing Game!'
 
       vi.mocked(mockWhosplayingService.getOnlineMembers).mockResolvedValue(mockMembers)
-  mockAiProvider.setMockResponse(JSON.stringify(mockMembers), mockAiResponseText)
+      mockAiProvider.setMockResponse(JSON.stringify(mockMembers), mockAiResponseText)
+      const spy = vi.spyOn(mockAiProvider, 'generate')
 
       await controller(mockContext as any)
 
       expect(mockWhosplayingService.getOnlineMembers).toHaveBeenCalledOnce()
       expect(mockContext.reply).toHaveBeenCalledWith('User1 is playing Game!')
+      expect(spy).toHaveBeenCalledWith(
+        JSON.stringify(mockMembers),
+        { system: whosplayingExpert, history: whosplayingHistory }
+      )
     })
 
     it('should handle errors gracefully', async () => {
