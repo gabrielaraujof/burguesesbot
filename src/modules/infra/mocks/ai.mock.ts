@@ -59,7 +59,7 @@ export class MockAiProvider implements AiProvider {
       .map(m => `${m.role}:${m.content}`)
       .join('|') || ''
     const configKey = options?.config ? this.stableSerialize(options.config) : ''
-    const composite = this.stableSerialize([input, system, historyKey, configKey])
+  const composite = this.stableSerialize({ input, system, history: historyKey, config: configKey })
     const hash = crypto.createHash('sha256').update(composite).digest('hex').slice(0, 16)
     return { text: `mock:${hash}` }
   }
