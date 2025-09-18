@@ -84,7 +84,7 @@ Controllers are tested with mock services (see `src/modules/infra/mocks/ai.mock.
 Enable the mock provider with `USE_MOCKS=true`. The `MockAiProvider`:
 
 - Allows explicit seeding via `setMockResponse(input, output)`
-- Produces a stable fallback hash (`mock:<hex16>`) based on `(input, system, history, config)` when not seeded
+- Produces a stable fallback hash (`mock:<hex16>`) based on `(input, system, history, config)` using stable key ordering when not seeded
 
 Example:
 

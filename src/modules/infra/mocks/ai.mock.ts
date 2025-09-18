@@ -35,6 +35,13 @@ export class MockAiService implements AiServiceLegacy {
 export class MockAiProvider implements AiProvider {
   private mockResponses: Map<string, string> = new Map()
 
+  private stableSerialize(value: any): string {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value)
+    if (Array.isArray(value)) return '[' + value.map(v => this.stableSerialize(v)).join(',') + ']'
+    const keys = Object.keys(value).sort()
+    return '{' + keys.map(k => JSON.stringify(k) + ':' + this.stableSerialize(value[k])).join(',') + '}'
+  }
+
   setMockResponse(input: string, response: string): void {
     this.mockResponses.set(input, response)
   }
@@ -51,8 +58,8 @@ export class MockAiProvider implements AiProvider {
       .filter(m => m.role !== 'system')
       .map(m => `${m.role}:${m.content}`)
       .join('|') || ''
-    const configKey = options?.config ? JSON.stringify(options.config) : ''
-    const composite = JSON.stringify([input, system, historyKey, configKey])
+    const configKey = options?.config ? this.stableSerialize(options.config) : ''
+    const composite = this.stableSerialize([input, system, historyKey, configKey])
     const hash = crypto.createHash('sha256').update(composite).digest('hex').slice(0, 16)
     return { text: `mock:${hash}` }
   }
