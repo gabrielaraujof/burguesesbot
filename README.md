@@ -79,6 +79,22 @@ Controllers are tested with mock services (see `src/modules/infra/mocks/ai.mock.
 - Adapters map neutral `ChatMessage[]` and simple `CommonGenerationConfig` to the underlying SDK and extract text internally.
 - History helpers like `whosplayingHistory` are provider-agnostic.
 
+### Deterministic mock AI
+
+Enable the mock provider with `USE_MOCKS=true`. The `MockAiProvider`:
+
+- Allows explicit seeding via `setMockResponse(input, output)`
+- Produces a stable fallback hash (`mock:<hex16>`) based on `(input, system, history, config)` when not seeded
+
+Example:
+
+```ts
+const mock = new MockAiProvider()
+const a = await mock.generate('hello', { system: 's' })
+const b = await mock.generate('hello', { system: 's' })
+// a.text === b.text (deterministic)
+```
+
 ## License
 
 [MIT](LICENSE)

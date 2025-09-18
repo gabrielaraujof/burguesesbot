@@ -1,7 +1,14 @@
-import type { AiService } from '../controllers/events.controllers.js'
 import type { AiProvider, AiResponse, GenerateOptions } from '../../ai/index.js'
+import crypto from 'node:crypto'
 
-export class MockAiService implements AiService {
+// Legacy mock retained until AiService removal (#58)
+export interface AiServiceLegacy {
+  generate(input: string, systemPrompt: string, history?: any[]): Promise<any>
+  setMockResponse(input: string, response: any): void
+  clearMockResponses(): void
+}
+
+export class MockAiService implements AiServiceLegacy {
   private mockResponses: Map<string, any> = new Map()
 
   setMockResponse(input: string, response: any): void {
@@ -32,11 +39,19 @@ export class MockAiProvider implements AiProvider {
     this.mockResponses.set(input, response)
   }
 
-  async generate(input: string, _options?: GenerateOptions): Promise<AiResponse> {
+  async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
     if (this.mockResponses.has(input)) {
       return { text: this.mockResponses.get(input)! }
     }
-    return { text: `Mock AI response for: ${input.substring(0, 50)}...` }
+    const system = options?.system || ''
+    const historyKey = options?.history
+      ?.filter(m => m.role !== 'system')
+      .map(m => `${m.role}:${m.content}`)
+      .join('|') || ''
+    const configKey = options?.config ? JSON.stringify(options.config) : ''
+    const composite = [input, system, historyKey, configKey].join('§')
+    const hash = crypto.createHash('sha256').update(composite).digest('hex').slice(0, 16)
+    return { text: `mock:${hash}` }
   }
 
   clearMockResponses(): void {

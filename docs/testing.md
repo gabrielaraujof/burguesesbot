@@ -44,6 +44,18 @@ mockAi.setMockResponse('input', 'output')
 const controller = createWhosplayingController({ aiProvider: mockAi, whosplayingService })
 ```
 
+Deterministic fallback:
+
+If you do not register a specific mock response via `setMockResponse`, the mock generates a stable hashed output derived from the tuple `(input, system, history, config)`:
+
+```
+// Unseeded call
+const { text } = await mockAi.generate('some input', { system: 'sys' })
+// text -> e.g. mock:3fae9c1b7d2a4f10 (hex hash prefix)
+```
+
+This guarantees the same inputs always yield the same mock output, removing randomness from tests while keeping responses compact.
+
 ## Architecture Benefits
 
 The refactored controllers now:
