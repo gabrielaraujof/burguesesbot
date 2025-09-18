@@ -60,15 +60,17 @@ export class MockAiProvider implements AiProvider {
 
   private buildHistoryKey(history?: any[]): string {
     if (!history || history.length === 0) return ''
-    const isRoleContentMsg = (m: any): m is { role: string; content: string } =>
-      m && typeof m.role === 'string' && typeof m.content === 'string'
     return (
       history
-        .filter(isRoleContentMsg)
+        .filter(this.isRoleContentMsg)
         .filter((m) => m.role !== 'system')
         .map((m) => `${m.role}:${m.content}`)
         .join('|') || ''
     )
+  }
+
+  private isRoleContentMsg(m: any): m is { role: string; content: string } {
+    return m && typeof m.role === 'string' && typeof m.content === 'string'
   }
 
   async generate(
