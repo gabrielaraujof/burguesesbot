@@ -1,3 +1,44 @@
+# AI Port — Streaming and Normalized Errors
+
+This project defines a provider-agnostic `AiProvider` port that supports standard text generation and optional streaming, along with normalized error codes for consistent handling across providers.
+
+## Interface
+
+```
+export interface AiProvider {
+  generate(input: string, options?: GenerateOptions): Promise<AiResponse>
+  generateStream?(input: string, options?: GenerateOptions): AsyncIterable<string>
+}
+```
+
+`generateStream` is optional; consumers should feature-detect (`if (provider.generateStream)`) and fall back to `generate` when not available.
+
+## Error Normalization
+
+Providers throw `AiError` with `code` in:
+
+- `timeout`
+- `rate_limited`
+- `unauthorized`
+- `blocked`
+- `network`
+- `internal`
+
+Adapters should map provider SDK errors to these codes, enabling consistent retries and UI feedback.
+
+## Example (stream consumption)
+
+```
+const provider: AiProvider = createProvider()
+if (provider.generateStream) {
+  for await (const token of provider.generateStream('Tell me a joke')) {
+    process.stdout.write(token)
+  }
+} else {
+  const { text } = await provider.generate('Tell me a joke')
+  console.log(text)
+}
+```
 # AI Provider Port (`AiProvider`)
 
 This document describes the AI provider port and how to use it inside controllers/adapters.
