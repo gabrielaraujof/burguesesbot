@@ -87,25 +87,51 @@ export class VertexAiProviderAdapter implements AiProvider {
           systemInstruction: system,
         })
         const chat = model.startChat({ generationConfig, history })
-        // SDK streaming support via .sendMessageStream
-        // Types in @google/generative-ai expose stream as an async iterator of chunks with text()
-        const stream: any = await this.callWithTimeout(() => (chat as any).sendMessageStream(input), timeoutMs)
-        // Some SDK versions expose an async iterator (.stream) or an events API. Prefer async iterator.
-        if (stream && typeof stream[Symbol.asyncIterator] === 'function') {
-          for await (const chunk of stream as AsyncIterable<any>) {
-            const t = typeof chunk?.text === 'function' ? chunk.text() : (chunk?.candidates?.[0]?.content?.parts?.[0]?.text ?? '')
+        const hasChatStream = typeof (chat as any).sendMessageStream === 'function'
+
+        if (hasChatStream) {
+          // Preferred: chat streaming with history and system
+          const stream: any = await this.callWithTimeout(() => (chat as any).sendMessageStream(input), timeoutMs)
+          if (stream && typeof stream[Symbol.asyncIterator] === 'function') {
+            for await (const chunk of stream as AsyncIterable<any>) {
+              const t = typeof (chunk as any)?.text === 'function'
+                ? (chunk as any).text()
+                : ((chunk as any)?.candidates?.[0]?.content?.parts?.[0]?.text ?? '')
+              if (t) yield t
+            }
+            return
+          }
+          // Fallback: concatenate and yield once
+          const fullText = await (async () => {
+            try {
+              if (typeof (stream as any)?.response?.text === 'function') return (stream as any).response.text()
+            } catch {}
+            return ''
+          })()
+          if (fullText) yield fullText
+          return
+        }
+
+        // Compatibility: model-level streaming when chat streaming is unavailable
+        const modelStreamResult: any = await this.callWithTimeout(() => (model as any).generateContentStream(input), timeoutMs)
+        const streamObj: any = (modelStreamResult as any)?.stream ?? modelStreamResult
+        if (streamObj && typeof streamObj[Symbol.asyncIterator] === 'function') {
+          for await (const chunk of streamObj as AsyncIterable<any>) {
+            const t = typeof (chunk as any)?.text === 'function'
+              ? (chunk as any).text()
+              : ((chunk as any)?.candidates?.[0]?.content?.parts?.[0]?.text ?? '')
             if (t) yield t
           }
           return
         }
-        // Fallback: concatenate and yield once
-        const fullText = await (async () => {
+        // Last resort single-yield
+        const singleText = await (async () => {
           try {
-            if (typeof stream?.response?.text === 'function') return stream.response.text()
+            if (typeof (modelStreamResult as any)?.response?.text === 'function') return (modelStreamResult as any).response.text()
           } catch {}
           return ''
         })()
-        if (fullText) yield fullText
+        if (singleText) yield singleText
         return
       } catch (err: any) {
         const aiErr = this.normalizeError(err, attempt, this.maxRetries)
