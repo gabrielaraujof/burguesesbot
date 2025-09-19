@@ -32,11 +32,59 @@ import {
 } from '../../trivia/index.js'
 import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
 import { whosplayingHistory } from '../../ai/index.js'
+import { getPersonaForCommand } from '../../ai/index.js'
 
-export const createLongweekController = () => {
+export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
     console.log('Answering semanalonga')
-    await ctx.reply('cadê a live?')
+    try {
+      // Use streaming to generate a fun, relaxed response
+      let response = ''
+      const systemPrompt = getPersonaForCommand('longweek')
+
+      if (deps.aiProvider.generateStream) {
+        // Use streaming for faster response
+        for await (const chunk of deps.aiProvider.generateStream(
+          'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
+          { 
+            system: systemPrompt,
+            config: { 
+              temperature: 0.8, 
+              maxTokens: 120 
+            }
+          }
+        )) {
+          response += chunk
+        }
+      } else {
+        // Fallback to regular generation
+        console.log('Streaming not available, using regular generation...')
+        const { text } = await deps.aiProvider.generate(
+          'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
+          { 
+            system: systemPrompt,
+            config: { 
+              temperature: 0.8, 
+              maxTokens: 120 
+            }
+          }
+        )
+        response = text
+        console.log('Regular AI response:', JSON.stringify(response))
+      }
+
+      // Ensure we have a non-empty response
+      if (!response || response.trim().length === 0) {
+        console.log('AI returned empty response, using fallback')
+        response = 'cadê a live? 🎮 Time to relax!'
+      }
+
+      await ctx.reply(response.trim())
+    } catch (err) {
+      console.error('Longweek AI error:', err)
+      // Fallback to original message if AI fails
+      await ctx.reply('cadê a live?')
+    }
   }
 }
 
@@ -71,7 +119,7 @@ export const createWhosplayingController = (deps: {
       const members = await deps.whosplayingService.getOnlineMembers()
       const { text: message } = await deps.aiProvider.generate(
         JSON.stringify(members),
-        { system: whosplayingExpert, history: whosplayingHistory },
+        { system: getPersonaForCommand('whosplaying'), history: whosplayingHistory },
       )
       await ctx.reply(message)
     } catch (err) {
@@ -104,7 +152,7 @@ export const createCallbackQueryController = (deps: {
           try {
             const { text } = await deps.aiProvider.generate(
               buildGnerationInput(quiz),
-              { system: triviaExpert },
+              { system: getPersonaForCommand('trivia') },
             )
             explanation = text
           } catch (err) {
@@ -139,7 +187,7 @@ export const createCallbackQueryController = (deps: {
 
 export const createControllers = (dependencies: ControllerDependencies) => {
   return {
-    longweek: createLongweekController(),
+    longweek: createLongweekController({ aiProvider: dependencies.aiProvider }),
     freegame: createFreegameController({ freeGamesService: dependencies.freeGamesService }),
     whosplaying: createWhosplayingController({ 
       aiProvider: dependencies.aiProvider,
