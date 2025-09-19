@@ -25,4 +25,9 @@ export type AiResponse = {
 
 export interface AiProvider {
   generate(input: string, options?: GenerateOptions): Promise<AiResponse>
+  // Optional streaming support. Providers may choose not to implement.
+  generateStream?(
+    input: string,
+    options?: GenerateOptions,
+  ): AsyncIterable<string>
 }

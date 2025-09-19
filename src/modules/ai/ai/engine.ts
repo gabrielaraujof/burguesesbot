@@ -1,3 +1,8 @@
+// Legacy engine - replaced by VertexAiProviderAdapter
+// This module is kept for compatibility but not currently used
+// All AI generation now goes through the adapter pattern
+
+/*
 import {
   GoogleGenerativeAI,
   type Content,
@@ -23,4 +28,9 @@ export function generate(input: string, system: string, history?: Content[]) {
   })
   const chatSession = model.startChat({ generationConfig, history })
   return chatSession.sendMessage(input)
+}
+*/
+
+export function generate() {
+  throw new Error('Legacy engine deprecated. Use VertexAiProviderAdapter instead.')
 }

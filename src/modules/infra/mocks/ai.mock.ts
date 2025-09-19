@@ -64,6 +64,30 @@ export class MockAiProvider implements AiProvider {
     return { text: `mock:${hash}` }
   }
 
+  async *generateStream(
+    input: string,
+    options?: GenerateOptions,
+  ): AsyncIterable<string> {
+    // For testing, we simulate streaming by yielding the response in chunks
+    if (this.mockResponses.has(input)) {
+      const response = this.mockResponses.get(input)!
+      // Split into chunks for realistic streaming simulation
+      const words = response.split(' ')
+      for (let i = 0; i < words.length; i++) {
+        if (i === words.length - 1) {
+          yield words[i] // Last word without trailing space
+        } else {
+          yield words[i] + ' '
+        }
+      }
+      return
+    }
+    
+    // Use the same deterministic logic as generate() for consistent behavior
+    const { text } = await this.generate(input, options)
+    yield text
+  }
+
   clearMockResponses(): void {
     this.mockResponses.clear()
   }
