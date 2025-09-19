@@ -72,6 +72,53 @@ export class VertexAiProviderAdapter implements AiProvider {
     }
   }
 
+  async *generateStream(input: string, options?: GenerateOptions): AsyncIterable<string> {
+    const system = options?.system || ''
+    const history = options?.history ? mapHistory(options.history) : undefined
+    const generationConfig = this.buildGenerationConfig(options)
+    const timeoutMs = this.defaultTimeout
+
+    let attempt = 0
+    while (true) {
+      attempt++
+      try {
+        const model = this.client.getGenerativeModel({
+          model: this.modelName,
+          systemInstruction: system,
+        })
+        const chat = model.startChat({ generationConfig, history })
+        // SDK streaming support via .sendMessageStream
+        // Types in @google/generative-ai expose stream as an async iterator of chunks with text()
+        const stream: any = await this.callWithTimeout(() => (chat as any).sendMessageStream(input), timeoutMs)
+        // Some SDK versions expose an async iterator (.stream) or an events API. Prefer async iterator.
+        if (stream && typeof stream[Symbol.asyncIterator] === 'function') {
+          for await (const chunk of stream as AsyncIterable<any>) {
+            const t = typeof chunk?.text === 'function' ? chunk.text() : (chunk?.candidates?.[0]?.content?.parts?.[0]?.text ?? '')
+            if (t) yield t
+          }
+          return
+        }
+        // Fallback: concatenate and yield once
+        const fullText = await (async () => {
+          try {
+            if (typeof stream?.response?.text === 'function') return stream.response.text()
+          } catch {}
+          return ''
+        })()
+        if (fullText) yield fullText
+        return
+      } catch (err: any) {
+        const aiErr = this.normalizeError(err, attempt, this.maxRetries)
+        if (aiErr.code === 'timeout') throw aiErr
+        if (aiErr.retry && attempt <= this.maxRetries) {
+          await this.sleep(200 * 2 ** (attempt - 1))
+          continue
+        }
+        throw aiErr
+      }
+    }
+  }
+
   private buildGenerationConfig(options?: GenerateOptions): GenerationConfig {
     const cfg = options?.config || {}
     return {
