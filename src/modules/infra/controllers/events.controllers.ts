@@ -33,8 +33,9 @@ import {
 import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
 import { whosplayingHistory } from '../../ai/index.js'
 import { getPersonaForCommand } from '../../ai/index.js'
-import { withTyping } from '../utils.js'
+import { withTyping, safeTruncate } from '../utils.js'
 import { buildTriviaJsonInstruction, safeParseTriviaExplanation } from '../../ai/structured.js'
+import { renderLongweekPrompt, renderTriviaExplanationPrompt } from '../../ai/prompts.js'
 
 export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
@@ -42,25 +43,14 @@ export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
     try {
       let response = ''
       await withTyping(ctx, async () => {
-        const systemPrompt = getPersonaForCommand('longweek')
+  const rendered = await renderLongweekPrompt()
+        const opts = { system: rendered.system, config: { temperature: 0.8, maxTokens: 120 } as const }
         if (deps.aiProvider.generateStream) {
-          for await (const chunk of deps.aiProvider.generateStream(
-            'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
-            {
-              system: systemPrompt,
-              config: { temperature: 0.8, maxTokens: 120 },
-            },
-          )) {
+          for await (const chunk of deps.aiProvider.generateStream(rendered.input, opts)) {
             response += chunk
           }
         } else {
-          const { text } = await deps.aiProvider.generate(
-            'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
-            {
-              system: systemPrompt,
-              config: { temperature: 0.8, maxTokens: 120 },
-            },
-          )
+          const { text } = await deps.aiProvider.generate(rendered.input, opts)
           response = text
         }
       })
@@ -143,10 +133,11 @@ export const createCallbackQueryController = (deps: {
           try {
             let text
             await withTyping(ctx, async () => {
-              const { text: t } = await deps.aiProvider.generate(
-                `${buildGnerationInput(quiz)}\n\n${buildTriviaJsonInstruction()}`,
-                { system: getPersonaForCommand('trivia') },
-              )
+              const rendered = await renderTriviaExplanationPrompt({
+                quizInput: buildGnerationInput(quiz),
+                formatInstructions: buildTriviaJsonInstruction(),
+              })
+              const { text: t } = await deps.aiProvider.generate(rendered.input, { system: rendered.system })
               text = t
             })
             const parsed = text ? safeParseTriviaExplanation(text) : null
@@ -158,10 +149,12 @@ export const createCallbackQueryController = (deps: {
             explanation = undefined
           }
           await ctx.deleteMessage(ctx.callbackQuery.message?.message_id)
+          const MAX_EXPLANATION = 190
+          const safeExplanation = explanation ? safeTruncate(explanation, MAX_EXPLANATION) : explanation
           await ctx.replyWithQuiz(quiz.title, quiz.options, {
             is_anonymous: false,
             correct_option_id: quiz.correctOptionIndex,
-            explanation,
+            explanation: safeExplanation,
           })
         } else {
           switch (data.menu) {

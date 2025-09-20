@@ -23,3 +23,10 @@ export async function withTyping<T>(
 		if (timer) clearInterval(timer)
 	}
 }
+
+// Truncate by Unicode code points to avoid cutting surrogate pairs (emojis), which breaks UTF-8
+export function safeTruncate(input: string, maxLength: number): string {
+	const points = Array.from(input)
+	if (points.length <= maxLength) return input
+	return points.slice(0, maxLength).join('')
+}
