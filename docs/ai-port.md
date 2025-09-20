@@ -26,6 +26,22 @@ Providers throw `AiError` with `code` in:
 
 Adapters should map provider SDK errors to these codes, enabling consistent retries and UI feedback.
 
+## Implementations
+
+- Vertex (default): `VertexAiProviderAdapter` using `@google/genai`.
+- LangChain (optional): `LangChainGenAiProviderAdapter` using `@langchain/google-genai`.
+
+Select at runtime via env:
+
+- `AI_PROVIDER=langchain` or `USE_LANGCHAIN=true` to enable LangChain.
+- Otherwise defaults to Vertex adapter.
+
+Both adapters support:
+
+- `system` prompts
+- conversation `history` (best-effort mapping)
+- streaming via `generateStream` and graceful fallback
+
 ## Example (stream consumption)
 
 ```
@@ -115,6 +131,12 @@ class VertexAiProviderAdapter implements AiProvider {
     const config = buildGenerationConfig(options?.config)
     const result = await withTimeout(() => sdkSend(modelArgs), timeoutMs)
     return { text: text(result) }
+  }
+}
+
+class LangChainGenAiProviderAdapter implements AiProvider {
+  async generate(input: string, options?: GenerateOptions) {
+    // Uses ChatGoogleGenerativeAI under the hood, with streaming support
   }
 }
 ```

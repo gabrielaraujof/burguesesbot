@@ -12,6 +12,7 @@ import type { AiProvider, GenerateOptions, ChatMessage, AiResponse } from '../..
 import { AiError } from '../../ai/index.js'
 
 import { GoogleGenAI } from '@google/genai'
+import { LangChainGenAiProviderAdapter } from './langchain.adapter.js'
 
 export class VertexAiProviderAdapter implements AiProvider {
   private readonly client: GoogleGenAI
@@ -210,8 +211,11 @@ export class WhosplayingServiceAdapter implements WhosplayingService {
 }
 
 export const createServiceAdapters = () => {
+  const useLangChain = (process.env.AI_PROVIDER || '').toLowerCase() === 'langchain' ||
+    (process.env.USE_LANGCHAIN || '').toLowerCase() === 'true'
+
   return {
-    aiProvider: new VertexAiProviderAdapter(),
+    aiProvider: useLangChain ? new LangChainGenAiProviderAdapter() : new VertexAiProviderAdapter(),
     freeGamesService: new FreeGamesServiceAdapter(),
     triviaService: new TriviaServiceAdapter(),
     whosplayingService: new WhosplayingServiceAdapter()
