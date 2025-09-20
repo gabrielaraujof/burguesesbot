@@ -33,52 +33,39 @@ import {
 import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
 import { whosplayingHistory } from '../../ai/index.js'
 import { getPersonaForCommand } from '../../ai/index.js'
+import { withTyping } from '../utils.js'
+import { buildTriviaJsonInstruction, safeParseTriviaExplanation } from '../../ai/structured.js'
 
 export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
     console.log('Answering semanalonga')
     try {
-      // Use streaming to generate a fun, relaxed response
       let response = ''
-      const systemPrompt = getPersonaForCommand('longweek')
-
-      if (deps.aiProvider.generateStream) {
-        // Use streaming for faster response
-        for await (const chunk of deps.aiProvider.generateStream(
-          'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
-          { 
-            system: systemPrompt,
-            config: { 
-              temperature: 0.8, 
-              maxTokens: 120 
-            }
+      await withTyping(ctx, async () => {
+        const systemPrompt = getPersonaForCommand('longweek')
+        if (deps.aiProvider.generateStream) {
+          for await (const chunk of deps.aiProvider.generateStream(
+            'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
+            {
+              system: systemPrompt,
+              config: { temperature: 0.8, maxTokens: 120 },
+            },
+          )) {
+            response += chunk
           }
-        )) {
-          response += chunk
+        } else {
+          const { text } = await deps.aiProvider.generate(
+            'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
+            {
+              system: systemPrompt,
+              config: { temperature: 0.8, maxTokens: 120 },
+            },
+          )
+          response = text
         }
-      } else {
-        // Fallback to regular generation
-        console.log('Streaming not available, using regular generation...')
-        const { text } = await deps.aiProvider.generate(
-          'A semana foi tão longa e cansativa! Preciso de algo para ajudar a relaxar e descansar.',
-          { 
-            system: systemPrompt,
-            config: { 
-              temperature: 0.8, 
-              maxTokens: 120 
-            }
-          }
-        )
-        response = text
-        console.log('Regular AI response:', JSON.stringify(response))
-      }
+      })
 
-      // Ensure we have a non-empty response
-      if (!response || response.trim().length === 0) {
-        console.log('AI returned empty response, using fallback')
-        response = 'cadê a live? 🎮 Time to relax!'
-      }
-
+      if (!response || response.trim().length === 0) response = 'cadê a live? 🎮 Time to relax!'
       await ctx.reply(response.trim())
     } catch (err) {
       console.error('Longweek AI error:', err)
@@ -117,10 +104,14 @@ export const createWhosplayingController = (deps: {
   return async (ctx: Context) => {
     try {
       const members = await deps.whosplayingService.getOnlineMembers()
-      const { text: message } = await deps.aiProvider.generate(
-        JSON.stringify(members),
-        { system: getPersonaForCommand('whosplaying'), history: whosplayingHistory },
-      )
+      let message = ''
+      await withTyping(ctx, async () => {
+        const res = await deps.aiProvider.generate(
+          JSON.stringify(members),
+          { system: getPersonaForCommand('whosplaying'), history: whosplayingHistory },
+        )
+        message = res.text
+      })
       await ctx.reply(message)
     } catch (err) {
       console.error(err)
@@ -150,11 +141,18 @@ export const createCallbackQueryController = (deps: {
           const [quiz] = await deps.triviaService.getQuestions(data)
           let explanation
           try {
-            const { text } = await deps.aiProvider.generate(
-              buildGnerationInput(quiz),
-              { system: getPersonaForCommand('trivia') },
-            )
-            explanation = text
+            let text
+            await withTyping(ctx, async () => {
+              const { text: t } = await deps.aiProvider.generate(
+                `${buildGnerationInput(quiz)}\n\n${buildTriviaJsonInstruction()}`,
+                { system: getPersonaForCommand('trivia') },
+              )
+              text = t
+            })
+            const parsed = text ? safeParseTriviaExplanation(text) : null
+            explanation = parsed
+              ? `${parsed.explanation}${parsed.fun_fact ? `\n\nCuriosidade: ${parsed.fun_fact}` : ''}`
+              : text
           } catch (err) {
             console.error(err)
             explanation = undefined
