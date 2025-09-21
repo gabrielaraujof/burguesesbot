@@ -102,12 +102,18 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const controller = new AbortController()
         const id = setTimeout(() => controller.abort(), this.defaultTimeout)
         try {
-          const res = await model.invoke(messages, { signal: controller.signal })
+          const invokeOptions: any = { signal: controller.signal }
+          if (this.includeUsage()) invokeOptions.stream_options = { include_usage: true }
+          const res = await model.invoke(messages, invokeOptions)
           clearTimeout(id)
           const text = Array.isArray(res?.content)
             ? res.content.map((c: any) => (typeof c === 'string' ? c : c.text || '')).join('')
             : res?.content || ''
-          return { text: String(text) }
+          const out: any = { text: String(text) }
+          if (this.includeUsage() && res?.usage) {
+            out.usage = res.usage
+          }
+          return out
         } catch (err: any) {
           clearTimeout(id)
           throw err
