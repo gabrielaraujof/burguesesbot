@@ -126,8 +126,12 @@ describe('VertexAiProviderAdapter', () => {
 
   it('streams content in chunks', async () => {
     const adapter = new VertexAiProviderAdapter({ timeoutMs: 100 })
+    const gen = adapter.generateStream
+    if (typeof gen !== 'function') {
+      throw new Error('generateStream is not implemented on adapter')
+    }
     const chunks: string[] = []
-    for await (const chunk of adapter.generateStream!('hello streaming')) {
+    for await (const chunk of gen.call(adapter, 'hello streaming')) {
       chunks.push(chunk)
     }
     expect(chunks.join('')).toBe('Echo: hello streaming')

@@ -33,13 +33,14 @@ import {
 import { triviaExpert, whosplayingExpert } from '../../ai/index.js'
 import { whosplayingHistory } from '../../ai/index.js'
 import { getPersonaForCommand } from '../../ai/index.js'
-import { withTyping, safeTruncate } from '../utils.js'
+import { withTyping, safeTruncate, TELEGRAM_QUIZ_EXPLANATION_MAX_CHARS } from '../utils.js'
 import { buildTriviaJsonInstruction, safeParseTriviaExplanation } from '../../ai/structured.js'
 import { renderLongweekPrompt, renderTriviaExplanationPrompt } from '../../ai/prompts.js'
 
 export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
-    console.log('Answering semanalonga')
+    // lightweight log without sensitive contents
+    if (process.env.NODE_ENV !== 'test') console.info('Answering semanalonga')
     try {
       let response = ''
       await withTyping(ctx, async () => {
@@ -67,7 +68,7 @@ export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
 
 export const createFreegameController = (deps: { freeGamesService: FreeGamesService }) => {
   return async (ctx: Context) => {
-    console.log('Answering freegames command')
+    if (process.env.NODE_ENV !== 'test') console.info('Answering freegames command')
     const games = await deps.freeGamesService.getFreeGames()
     games.sort(activeCompareFn)
 
@@ -111,7 +112,7 @@ export const createWhosplayingController = (deps: {
 
 export const createTriviaController = () => {
   return async (ctx: Context) => {
-    console.log('Answering trivia command')
+    if (process.env.NODE_ENV !== 'test') console.info('Answering trivia command')
     await ctx.reply(display(), mainMenu())
   }
 }
@@ -125,7 +126,7 @@ export const createCallbackQueryController = (deps: {
       console.log('Answering data callback_query')
       try {
         const data = JSON.parse(ctx.callbackQuery.data)
-        console.debug(`Menu: ${data.menu ?? 'main'} | Done: ${!!data.done}`)
+        if (process.env.NODE_ENV !== 'test') console.debug(`Menu: ${data.menu ?? 'main'} | Done: ${!!data.done}`)
 
         if (data.done) {
           const [quiz] = await deps.triviaService.getQuestions(data)
@@ -145,12 +146,11 @@ export const createCallbackQueryController = (deps: {
               ? `${parsed.explanation}${parsed.fun_fact ? `\n\nCuriosidade: ${parsed.fun_fact}` : ''}`
               : text
           } catch (err) {
-            console.error(err)
+            console.error('trivia explanation error')
             explanation = undefined
           }
           await ctx.deleteMessage(ctx.callbackQuery.message?.message_id)
-          const MAX_EXPLANATION = 190
-          const safeExplanation = explanation ? safeTruncate(explanation, MAX_EXPLANATION) : explanation
+          const safeExplanation = explanation ? safeTruncate(explanation, TELEGRAM_QUIZ_EXPLANATION_MAX_CHARS) : explanation
           await ctx.replyWithQuiz(quiz.title, quiz.options, {
             is_anonymous: false,
             correct_option_id: quiz.correctOptionIndex,
@@ -170,7 +170,7 @@ export const createCallbackQueryController = (deps: {
           }
         }
       } catch (err) {
-        console.error(err)
+        console.error('callback_query error')
       }
     }
   }

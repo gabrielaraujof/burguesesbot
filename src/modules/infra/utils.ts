@@ -30,3 +30,6 @@ export function safeTruncate(input: string, maxLength: number): string {
 	if (points.length <= maxLength) return input
 	return points.slice(0, maxLength).join('')
 }
+
+// Telegram enforces ~200 chars limit for quiz explanations; keep headroom for safety
+export const TELEGRAM_QUIZ_EXPLANATION_MAX_CHARS = 190

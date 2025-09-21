@@ -50,6 +50,10 @@ vi.mock('@langchain/core/messages', () => ({
   SystemMessage: class SystemMessage {
     content: string
     constructor(content: string) { this.content = content }
+  },
+  AIMessage: class AIMessage {
+    content: string
+    constructor(content: string) { this.content = content }
   }
 }))
 

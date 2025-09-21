@@ -19,6 +19,22 @@ export class VertexAiProviderAdapter implements AiProvider {
   private readonly modelName: string
   private readonly defaultTimeout: number
   private readonly maxRetries: number
+  
+  // Narrow stream chunk shape used by our code/tests
+  private static extractChunkText(chunk: unknown): string {
+    const anyChunk = chunk as any
+    const t = typeof anyChunk?.text === 'function' ? anyChunk.text() : anyChunk?.text
+    return typeof t === 'string' ? t : ''
+  }
+
+  private static extractFallbackText(stream: unknown): string {
+    const t = (stream as any)?.text
+    return typeof t === 'string' ? t : ''
+  }
+
+  private static isAsyncIterable<T = unknown>(obj: unknown): obj is AsyncIterable<T> {
+    return !!obj && typeof (obj as any)[Symbol.asyncIterator] === 'function'
+  }
 
   constructor(params?: {
     modelName?: string
@@ -61,10 +77,12 @@ export class VertexAiProviderAdapter implements AiProvider {
     while (true) {
       attempt++
       try {
+        // Build contents with optional history
+        const contents = this.buildContents(input, options)
         const result = await this.callWithTimeout(async () => {
           return await this.client.models.generateContent({
             model: this.modelName,
-            contents: input,
+            contents,
             config: this.buildGenerationConfig(options),
           })
         }, this.defaultTimeout)
@@ -88,24 +106,25 @@ export class VertexAiProviderAdapter implements AiProvider {
     while (true) {
       attempt++
       try {
+        const contents = this.buildContents(input, options)
         const stream = await this.callWithTimeout(async () => {
           return await this.client.models.generateContentStream({
             model: this.modelName,
-            contents: input,
+            contents,
             config: this.buildGenerationConfig(options),
           })
         }, this.defaultTimeout)
 
-        if (stream && typeof (stream as any)[Symbol.asyncIterator] === 'function') {
-          for await (const chunk of (stream as AsyncIterable<any>)) {
-            const chunkText = (chunk as any).text || ''
+        if (VertexAiProviderAdapter.isAsyncIterable(stream)) {
+          for await (const chunk of (stream as AsyncIterable<unknown>)) {
+            const chunkText = VertexAiProviderAdapter.extractChunkText(chunk)
             if (chunkText) yield chunkText
           }
           return
         }
 
         // Fallback: try to get text from stream object directly
-        const fallbackText = (stream as any)?.text || ''
+        const fallbackText = VertexAiProviderAdapter.extractFallbackText(stream)
         if (fallbackText) yield fallbackText
         return
       } catch (err: any) {
@@ -129,7 +148,7 @@ export class VertexAiProviderAdapter implements AiProvider {
     }
 
     // Add thinking configuration for Gemini 2.5 Flash models only
-    if (this.modelName.includes('2.5-flash')) {
+    if (this.supportsThinkingConfig(this.modelName)) {
       config.thinkingConfig = {
         thinkingBudget: -1, // Enable unlimited thinking
         includeThoughts: false, // Don't include thinking in response
@@ -146,6 +165,27 @@ export class VertexAiProviderAdapter implements AiProvider {
     }
 
     return config
+  }
+
+  private buildContents(input: string, options?: GenerateOptions) {
+    // Google GenAI v2 models accept strings or rich contents; we construct a simple
+    // string conversation by concatenating prior turns with markers, preserving
+    // current tests that assert `contents` is a string when no history exists.
+    const history = options?.history
+    if (!history || history.length === 0) return input
+    const lines: string[] = []
+    for (const m of history) {
+      if (m.role === 'user') lines.push(`User: ${m.content}`)
+      else if (m.role === 'assistant') lines.push(`Assistant: ${m.content}`)
+      // system is handled via config.systemInstruction below
+    }
+    lines.push(`User: ${input}`)
+    return lines.join('\n')
+  }
+
+  private supportsThinkingConfig(modelName: string): boolean {
+    // Accept known Gemini 2.5 Flash variants, e.g., gemini-2.5-flash, gemini-2.5-flash-001, -002
+    return /^gemini-2\.5-flash(?:-\d+)?$/i.test(modelName)
   }
 
   private async callWithTimeout<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
