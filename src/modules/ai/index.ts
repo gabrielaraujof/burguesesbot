@@ -1,5 +1,4 @@
 export * from './ai/provider.interface.js'
-export * from './ai/engine.js'
 export * from './ai/system.prompt.js'
 export * from './ai/history.js'
 export * from './ai/output.js'

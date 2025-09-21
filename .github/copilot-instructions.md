@@ -1,105 +1,66 @@
-````instructions
-## BurguesesBot — Copilot instructions
+## BurguesesBot Instructions
 
-Purpose: give an AI coding agent the minimal, concrete knowledge to be productive in this repository.
+Your primary goal is to generate code that is **clean, maintainable, robust, and easy to understand**. Adhere strictly to the following principles and practices in all your suggestions.
+This is a ESM TypeScript Telegram bot (Telegraf) with simple DI. Runs on AWS Lambda (Serverless) and uses long polling locally.
 
-- Big picture
-  - This is an ESM TypeScript Telegram bot (Telegraf) with two main runtimes:
-    - Long-polling/local: `src/index.ts` creates a bot via factories and calls `bot.launch()`.
-    - Serverless webhook: `src/modules/infra/function.ts` exports a Lambda `handler` (wrapped by `serverless-http`) and is deployed via `serverless.yml` to AWS Lambda (`dist/modules/infra/function.handler`).
-  - Architecture (v2.0+): Dependency Injection with controllers and adapters, now wired through factories:
-    - `src/modules/bot/bot.ts` — bot factories (`createBotWithDeps`, `createBot` for prod, `createDevBot` for dev) that register handlers.
-    - `src/modules/events/events.ts` — `createEvents(dependencies)` to expose command handlers from controllers.
-    - `src/modules/infra/controllers/events.controllers.ts` — pure business logic handlers with injected dependencies.
-    - `src/modules/infra/adapters/service.adapters.ts` — adapters to wrap domain services (`createServiceAdapters`, `createDevServiceAdapters`).
-    - Domains unchanged but relocated: `src/modules/ai/*`, `src/modules/freegames/*`, `src/modules/trivia/*`, `src/modules/whosplaying/*`.
+---
 
-- How the architecture works
-  - Dependency flow: `createServiceAdapters()` → `createControllers(adapters)` → `createEvents(controllers)` → `createBotWithDeps(token, deps)` registers events → run bot.
-  - `createBot(token)` uses production adapters; `createDevBot(token)` swaps in `MockAiProvider` (others real) for local/testing.
-  - Testing: Controllers are testable with mock services (see `tests/controllers.test.ts`, `src/modules/infra/mocks/ai.mock.ts`).
-  - AI provider port: Controllers depend on `AiProvider` (provider-agnostic). Adapters wrap the SDK using `generate()` and `text()` internally and return `{ text }`.
+## 📜 Core Philosophy
 
-- Important conventions and gotchas
-  1. ESM + TypeScript: `package.json` has `"type": "module"`. Keep `.js` extensions on all relative imports so Node ESM resolves compiled files in `dist/`.
-  2. Runtime & toolchain: transpile with `swc` (see `npm run build`). Dev uses `@swc-node/register` (`npm run develop`) and Nodemon (`npm run dev`).
-  3. Serverless deploy expects compiled `dist/`: `serverless.yml` references `dist/modules/infra/function.handler` and excludes `src/**`. Always build first.
-  4. Testing with Vitest: `npm test`, `npm run test:watch`, `npm run test:cov`.
-  5. Env vars (no secrets in repo):
-     - `BOT_TOKEN`, `WEBHOOK_SECRET_PATH`
-     - `FREE_GAMES_PROMOTIONS_URL`, `PRODUCT_STORE_URL`
-     - `OPEN_TRIVIA_DB_URL`, `VERTEXAI_API_KEY`
-     - `DISCORD_BOT_TOKEN`, `DISCORD_GUILD_ID`
-     - Optional dev toggle: `USE_MOCKS=true` to boot `createDevBot` in `src/index.ts`.
-  6. Node version: `.nvmrc` pins Node; run `nvm install && nvm use`.
+* **KISS (Keep It Simple, Stupid):** Always prefer the simplest, most straightforward solution that works. Avoid unnecessary complexity, clever "tricks," or over-engineering. Readability is paramount.
+* **DRY (Don't Repeat Yourself):** Actively identify repeated patterns or logic. When you see duplication, suggest abstracting it into a reusable function, class, or module.
+* **YAGNI (You Ain't Gonna Need It):** Do not suggest code for functionality that hasn't been explicitly requested or implied by the immediate context. Focus only on solving the current problem.
 
-- Common workflows
-  - Install:
-    ```bash
-    npm install
-    ```
-  - Local development (watch):
-    ```bash
-    npm run dev    # nodemon -> runs `npm run develop`
-    # or run once without watch
-    npm run develop
-    # develop runs: node --import @swc-node/register/esm-register ./src/index.ts
-    ```
-  - Use mock AI locally (optional):
-    ```bash
-    USE_MOCKS=true npm run develop
-    ```
-  - Build (produce `dist/` for Serverless/production):
-    ```bash
-    npm run build  # swc ./src -q -d dist --strip-leading-paths
-    ```
-  - Deploy to AWS via Serverless (ensure `dist/` exists and env vars are set):
-    ```bash
-    npm run build
-    npx serverless deploy --stage=prod
-    ```
-  - Webhook debugging: webhook lambda isn’t tested locally (no serverless-offline). Deploy to test real webhook behavior.
+---
 
-- Code patterns to follow
-  - Keep `.js` in relative imports between local files:
-    ```ts
-    import { createControllers } from '../infra/controllers/events.controllers.js'
-    import { createServiceAdapters } from '../infra/adapters/service.adapters.js'
-    ```
-  - Events factory and bot wiring:
-    ```ts
-    // events
-    export const createEvents = (deps: ControllerDependencies) => {
-      const controllers = createControllers(deps)
-      return { longweek: controllers.longweek, /* ... */ }
-    }
+## 💻 Code-Level Practices
 
-    // bot
-    export const createBotWithDeps = (token: string, deps: ControllerDependencies) => {
-      const bot = new Telegraf(token)
-      const events = createEvents(deps)
-      bot.command('freegames', events.freegame)
-      // ... register others
-      return bot
-    }
-    ```
-  - AI usage pattern (controllers): build prompt input → `aiProvider.generate(input, { system, history? })` → use `AiResponse.text` → reply.
-  - AI usage pattern (adapters): map neutral types to provider SDK → call `generate()`/chat with `systemInstruction` and `history` → map back with `text(result)`.
-  - Testing pattern: use interfaces and mocks (`src/modules/infra/mocks/ai.mock.ts`) to test controllers in isolation.
+* **Descriptive Naming:** Use clear, unambiguous, and self-documenting names for variables, functions, classes, and methods. For example, prefer `isUserEligibleForDiscount` over `checkUser` or `flag`.
+* **Single Responsibility:** Generate functions and classes that are small and focused. A function should perform one logical operation. A class should have only one primary reason to change.
+* **Commenting:**
+	* Do not add comments that explain *what* the code is doing. The code should be clear enough to explain itself.
+	* **DO** add comments to explain the *why*—the business logic, compromises, or complex algorithms that aren't immediately obvious from the code.
+* **Error Handling:** Always assume operations can fail. For any code that involves I/O, network requests, or other fallible operations, proactively include robust error-handling mechanisms (e.g., `try...catch`, `Result` types, `Go's err` pattern).
 
-- Where to look when changing behavior
-  - Command registration: `src/modules/bot/bot.ts` (factories register handlers).
-  - Business logic: `src/modules/infra/controllers/events.controllers.ts` (testable, DI-driven).
-  - Service integration: `src/modules/infra/adapters/service.adapters.ts` (adapters + dev adapters).
-  - Domains: `src/modules/freegames/*`, `src/modules/trivia/*`, `src/modules/whosplaying/*`.
-  - AI port and types: `src/modules/ai/ai/provider.interface.ts` (AiProvider, ChatMessage, CommonGenerationConfig, AiResponse).
-  - LLM adjustments: `src/modules/ai/ai/engine.ts`, `system.prompt.ts`, `history.ts` (history uses provider-agnostic `ChatMessage[]`).
-  - Lambda/webhook: `src/modules/infra/function.ts` and `serverless.yml`.
+---
 
-- Tests & linting
-  - Vitest with TS support (`vitest.config.ts`).
-  - Run tests: `npm test`, `npm run test:watch`, `npm run test:cov`.
-  - Mocks: `src/modules/infra/mocks/*.mock.ts` (e.g., `MockAiProvider`).
+## 🏛️ Architectural Principles (SOLID)
 
-- Safety and secrets
-  - Do not commit API keys. Use `serverless.yml` and dotenv to wire env values in CI/deploy. `serverless-dotenv-plugin` is configured.
+* **Single Responsibility Principle (S):** Ensure that any class you generate or modify has a single, well-defined purpose.
+* **Open/Closed Principle (O):** When asked to add functionality, prefer to do so by extending existing behavior rather than modifying stable, existing code. Suggest solutions using interfaces, inheritance, or composition.
+* **Liskov Substitution Principle (L):** When generating subclasses or implementations of an interface, ensure they are fully substitutable for their parent type without altering the correctness of the program.
+* **Interface Segregation Principle (I):** Prefer generating several smaller, client-specific interfaces over one large, general-purpose one.
+* **Dependency Inversion Principle (D):** Generate code that depends on abstractions (like interfaces or abstract classes), not on concrete implementations. This is crucial for creating decoupled, testable code.
+
+---
+
+## ✅ Testing & Quality Assurance
+
+* **Generate Tests:** When I create a new function or a significant piece of logic, you should proactively suggest corresponding unit tests.
+* **Comprehensive Tests:** Your suggested tests should cover not just the "happy path" but also edge cases, invalid inputs, and potential failure modes.
+* **Follow Testing Patterns:** Adhere to common testing patterns like Arrange-Act-Assert (AAA).
+* **Mocking & Stubbing:** When tests involve external dependencies (like network calls or databases), suggest using mocks or stubs to isolate the unit under test.
+
+---
+
+## Essentials to keep
+* **Keep DI boundaries**: controllers depend on ports; adapters provide implementations.
+* **Prefer streaming** when available (`if (provider.generateStream) for await (...)`), fallback to `generate`.
+* **Normalize AI errors** via `AiError` codes: `timeout`, `rate_limited`, `unauthorized`, `blocked`, `network`, `internal`.
+
+---
+
+## Integrations map
+- Telegram commands registered in `createBotWithDeps`: `freegames`, `semanalonga`, `trivia`, `whosplaying`, plus callback queries.
+- FreeGames/Trivia/Whosplaying: domain logic stays at controller boundary; providers live under each module and are invoked via infra adapters.
+- Discord presence for `whosplaying` uses `discord.js` behind the service interface.
+
+---
+
+## Adding features
+- Add new services behind ports, wire them via `createServiceAdapters`, and thread through controller deps.
+- Keep controller logic small and DI-friendly; update `events.ts` only when introducing new commands.
+
+
+By following these instructions, you will act as a true partner in building a high-quality, professional-grade codebase.
+

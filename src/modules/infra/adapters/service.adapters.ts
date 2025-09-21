@@ -26,11 +26,6 @@ export class GoogleGenAiProviderAdapter implements AiProvider {
     return typeof t === 'string' ? t : ''
   }
 
-  private static extractFallbackText(stream: unknown): string {
-    const t = (stream as any)?.text
-    return typeof t === 'string' ? t : ''
-  }
-
   private static async safeExtractText(obj: any): Promise<string> {
     try {
       if (!obj) return ''
@@ -49,7 +44,7 @@ export class GoogleGenAiProviderAdapter implements AiProvider {
   }
 
   constructor(params?: { modelName?: string; timeoutMs?: number; maxRetries?: number }) {
-    const apiKey = process.env.GOOGLE_API_KEY ?? ''
+    const apiKey = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? ''
     this.client = new GoogleGenAI({ apiKey })
     const defaultModel = 'gemini-1.5-flash'
     this.modelName = params?.modelName || process.env.AI_MODEL || defaultModel

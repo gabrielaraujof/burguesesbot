@@ -86,7 +86,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GOOGLE_API_KEY,
+          apiKey: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
         })
 
         const messages: any[] = []
@@ -128,7 +128,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GOOGLE_API_KEY,
+          apiKey: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
         })
 
         const messages: any[] = []
