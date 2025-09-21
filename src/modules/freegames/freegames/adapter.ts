@@ -6,8 +6,7 @@ export class FreeGamesServiceProviderAdapter implements FreeGamesProvider {
   constructor(private readonly maxRetries = 2, private readonly delayMs = 200) {}
 
   async getPromotions(): Promise<any> {
-    // Expose raw promotions is not directly supported by current service; return empty shape for now
-    return { data: { Catalog: { searchStore: { elements: [], paging: { count: 0, total: 0 } } } } }
+  return { data: { Catalog: { searchStore: { elements: [], paging: { count: 0, total: 0 } } } } }
   }
 
   async getFreeGames(): Promise<FreeGame[]> {

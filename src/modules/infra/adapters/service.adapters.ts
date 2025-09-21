@@ -14,7 +14,7 @@ import { AiError } from '../../ai/index.js'
 import { GoogleGenAI } from '@google/genai'
 import { LangChainGenAiProviderAdapter } from './langchain.adapter.js'
 
-export class VertexAiProviderAdapter implements AiProvider {
+export class GoogleGenAiProviderAdapter implements AiProvider {
   private readonly client: GoogleGenAI
   private readonly modelName: string
   private readonly defaultTimeout: number
@@ -31,35 +31,27 @@ export class VertexAiProviderAdapter implements AiProvider {
     return typeof t === 'string' ? t : ''
   }
 
+  private static async safeExtractText(obj: any): Promise<string> {
+    try {
+      if (!obj) return ''
+      if (typeof obj.text === 'function') return String(await obj.text())
+      if (typeof obj.text === 'string') return obj.text
+      if (typeof obj.response?.text === 'function') return String(await obj.response.text())
+      if (typeof obj.response?.text === 'string') return obj.response.text
+      return ''
+    } catch {
+      return ''
+    }
+  }
+
   private static isAsyncIterable<T = unknown>(obj: unknown): obj is AsyncIterable<T> {
     return !!obj && typeof (obj as any)[Symbol.asyncIterator] === 'function'
   }
 
-  constructor(params?: {
-    modelName?: string
-    timeoutMs?: number
-    maxRetries?: number
-  }) {
-    const apiKey = process.env.VERTEXAI_API_KEY ?? ''
-
-    if (process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_LOCATION) {
-      this.client = new GoogleGenAI({
-        vertexai: true,
-        project: process.env.GOOGLE_CLOUD_PROJECT,
-        location: process.env.GOOGLE_CLOUD_LOCATION,
-        apiKey: apiKey,
-      })
-    } else {
-      this.client = new GoogleGenAI({
-        apiKey: apiKey,
-      })
-    }
-
-    const defaultModel =
-      process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_LOCATION
-        ? 'gemini-2.5-flash-002'
-        : 'gemini-1.5-flash'
-
+  constructor(params?: { modelName?: string; timeoutMs?: number; maxRetries?: number }) {
+    const apiKey = process.env.GOOGLE_API_KEY ?? ''
+    this.client = new GoogleGenAI({ apiKey })
+    const defaultModel = 'gemini-1.5-flash'
     this.modelName = params?.modelName || process.env.AI_MODEL || defaultModel
     this.defaultTimeout = params?.timeoutMs || parseInt(process.env.AI_TIMEOUT_MS || '30000')
     this.maxRetries = params?.maxRetries ?? 2
@@ -80,7 +72,8 @@ export class VertexAiProviderAdapter implements AiProvider {
           })
         }, this.defaultTimeout)
 
-        return { text: (result as any).text || '' }
+  const extracted = await GoogleGenAiProviderAdapter.safeExtractText(result as any)
+  return { text: extracted }
       } catch (err: any) {
         const aiErr = this.normalizeError(err, attempt, this.maxRetries)
         if (aiErr.code === 'timeout') throw aiErr
@@ -108,16 +101,16 @@ export class VertexAiProviderAdapter implements AiProvider {
           })
         }, this.defaultTimeout)
 
-        if (VertexAiProviderAdapter.isAsyncIterable(stream)) {
+        if (GoogleGenAiProviderAdapter.isAsyncIterable(stream)) {
           for await (const chunk of (stream as AsyncIterable<unknown>)) {
-            const chunkText = VertexAiProviderAdapter.extractChunkText(chunk)
+            const chunkText = GoogleGenAiProviderAdapter.extractChunkText(chunk)
             if (chunkText) yield chunkText
           }
           return
         }
 
-        const fallbackText = VertexAiProviderAdapter.extractFallbackText(stream)
-        if (fallbackText) yield fallbackText
+        const fallbackText = await GoogleGenAiProviderAdapter.safeExtractText(stream)
+        if (fallbackText) yield String(fallbackText)
         return
       } catch (err: any) {
         const aiErr = this.normalizeError(err, attempt, this.maxRetries)
@@ -170,7 +163,8 @@ export class VertexAiProviderAdapter implements AiProvider {
   }
 
   private supportsThinkingConfig(modelName: string): boolean {
-    return /^gemini-2\.5-flash(?:-\d+)?$/i.test(modelName)
+    if (!modelName) return false
+    return /^\s*gemini-\d+(?:\.\d+)?(?:-flash(?:-\w+)?)?\s*$/i.test(modelName)
   }
 
   private async callWithTimeout<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
@@ -246,7 +240,7 @@ export const createServiceAdapters = () => {
   return {
     aiProvider: useLangChain
       ? new LangChainGenAiProviderAdapter()
-      : new VertexAiProviderAdapter(),
+      : new GoogleGenAiProviderAdapter(),
     freeGamesService: new FreeGamesServiceAdapter(),
     triviaService: new TriviaServiceAdapter(),
     whosplayingService: new WhosplayingServiceAdapter(),

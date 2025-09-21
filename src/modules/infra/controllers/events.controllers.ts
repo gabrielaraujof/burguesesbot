@@ -39,7 +39,8 @@ import { renderLongweekPrompt, renderTriviaExplanationPrompt } from '../../ai/pr
 
 export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
-    if (process.env.NODE_ENV !== 'test') console.info('Answering semanalonga')
+    const LOG_VERBOSE = process.env.DEBUG === 'true' || process.env.NODE_ENV !== 'production'
+    if (LOG_VERBOSE && process.env.NODE_ENV !== 'test') console.info('Answering semanalonga')
     try {
       let response = ''
       await withTyping(ctx, async () => {
@@ -59,7 +60,6 @@ export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
       await ctx.reply(response.trim())
     } catch (err) {
       console.error('Longweek AI error:', err)
-      
       await ctx.reply('cadê a live?')
     }
   }
@@ -67,7 +67,8 @@ export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
 
 export const createFreegameController = (deps: { freeGamesService: FreeGamesService }) => {
   return async (ctx: Context) => {
-    if (process.env.NODE_ENV !== 'test') console.info('Answering freegames command')
+    const LOG_VERBOSE = process.env.DEBUG === 'true' || process.env.NODE_ENV !== 'production'
+    if (LOG_VERBOSE && process.env.NODE_ENV !== 'test') console.info('Answering freegames command')
     const games = await deps.freeGamesService.getFreeGames()
     games.sort(activeCompareFn)
 
@@ -92,6 +93,7 @@ export const createWhosplayingController = (deps: {
   whosplayingService: WhosplayingService 
 }) => {
   return async (ctx: Context) => {
+    const LOG_VERBOSE = process.env.DEBUG === 'true' || process.env.NODE_ENV !== 'production'
     try {
       const members = await deps.whosplayingService.getOnlineMembers()
       let message = ''
@@ -105,13 +107,15 @@ export const createWhosplayingController = (deps: {
       await ctx.reply(message)
     } catch (err) {
       console.error(err)
+      if (LOG_VERBOSE) console.debug('Whosplaying error:', err)
     }
   }
 }
 
 export const createTriviaController = () => {
   return async (ctx: Context) => {
-    if (process.env.NODE_ENV !== 'test') console.info('Answering trivia command')
+    const LOG_VERBOSE = process.env.DEBUG === 'true' || process.env.NODE_ENV !== 'production'
+    if (LOG_VERBOSE && process.env.NODE_ENV !== 'test') console.info('Answering trivia command')
     await ctx.reply(display(), mainMenu())
   }
 }
@@ -121,11 +125,12 @@ export const createCallbackQueryController = (deps: {
   triviaService: TriviaService
 }) => {
   return async (ctx: Context<Update.CallbackQueryUpdate>) => {
+    const LOG_VERBOSE = process.env.DEBUG === 'true' || process.env.NODE_ENV !== 'production'
     if ('data' in ctx.callbackQuery) {
-      console.log('Answering data callback_query')
+      if (LOG_VERBOSE) console.log('Answering data callback_query')
       try {
         const data = JSON.parse(ctx.callbackQuery.data)
-        if (process.env.NODE_ENV !== 'test') console.debug(`Menu: ${data.menu ?? 'main'} | Done: ${!!data.done}`)
+        if (LOG_VERBOSE && process.env.NODE_ENV !== 'test') console.debug(`Menu: ${data.menu ?? 'main'} | Done: ${!!data.done}`)
 
         if (data.done) {
           const [quiz] = await deps.triviaService.getQuestions(data)
@@ -145,7 +150,7 @@ export const createCallbackQueryController = (deps: {
               ? `${parsed.explanation}${parsed.fun_fact ? `\n\nCuriosidade: ${parsed.fun_fact}` : ''}`
               : text
           } catch (err) {
-            console.error('trivia explanation error')
+            console.error('trivia explanation error:', err)
             explanation = undefined
           }
           await ctx.deleteMessage(ctx.callbackQuery.message?.message_id)
@@ -169,7 +174,7 @@ export const createCallbackQueryController = (deps: {
           }
         }
       } catch (err) {
-        console.error('callback_query error')
+        console.error('callback_query error:', err)
       }
     }
   }

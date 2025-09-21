@@ -39,7 +39,6 @@ function toModelParams(options?: GenerateOptions) {
   const params: Record<string, any> = {}
   if (cfg?.temperature != null) params.temperature = cfg.temperature
   if (cfg?.maxTokens != null) params.maxOutputTokens = cfg.maxTokens
-  // Note: topP, topK, stopSequences supported by Google GenAI chat via params
   if (cfg?.topP != null) params.topP = cfg.topP
   if (cfg?.topK != null) params.topK = cfg.topK
   if (cfg?.stopSequences) params.stopSequences = cfg.stopSequences
@@ -87,7 +86,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GOOGLE_API_KEY || process.env.VERTEXAI_API_KEY,
+          apiKey: process.env.GOOGLE_API_KEY,
         })
 
         const messages: any[] = []
@@ -129,7 +128,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GOOGLE_API_KEY || process.env.VERTEXAI_API_KEY,
+          apiKey: process.env.GOOGLE_API_KEY,
         })
 
         const messages: any[] = []

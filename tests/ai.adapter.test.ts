@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
-import { VertexAiProviderAdapter } from '../src/modules/infra/adapters/service.adapters.js'
+import { GoogleGenAiProviderAdapter } from '../src/modules/infra/adapters/service.adapters.js'
 import { AiError } from '../src/modules/ai/index.js'
 
 // Mock the new @google/genai library
@@ -63,18 +63,16 @@ vi.mock('@google/genai', () => {
 
 beforeAll(() => {
   vi.stubEnv('AI_TIMEOUT_MS', '10')
-  vi.stubEnv('VERTEXAI_API_KEY', 'test-key')
-  vi.stubEnv('GOOGLE_CLOUD_PROJECT', 'test-project')
-  vi.stubEnv('GOOGLE_CLOUD_LOCATION', 'us-central1')
+  vi.stubEnv('GOOGLE_API_KEY', 'test-key')
 })
 
 afterAll(() => {
   vi.unstubAllEnvs()
 })
 
-describe('VertexAiProviderAdapter', () => {
+describe('GoogleGenAiProviderAdapter', () => {
   it('generates content with system instruction', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 100 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 100 })
     const { text } = await adapter.generate('hello', {
       system: 'You are a test system'
     })
@@ -85,7 +83,7 @@ describe('VertexAiProviderAdapter', () => {
   })
 
   it('maps config values correctly', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 100 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 100 })
     await adapter.generate('config test', {
       config: { temperature: 0.1, topP: 0.9, topK: 50, maxTokens: 42, stopSequences: ['STOP'] }
     })
@@ -100,7 +98,7 @@ describe('VertexAiProviderAdapter', () => {
   })
 
   it('includes thinking config for 2.5-flash models', async () => {
-    const adapter = new VertexAiProviderAdapter({ modelName: 'gemini-2.5-flash-002', timeoutMs: 100 })
+  const adapter = new GoogleGenAiProviderAdapter({ modelName: 'gemini-2.5-flash-002', timeoutMs: 100 })
     await adapter.generate('thinking test')
     const captured = (globalThis as any).__genaiMock
     expect(captured.config.thinkingConfig).toMatchObject({
@@ -110,22 +108,22 @@ describe('VertexAiProviderAdapter', () => {
   })
 
   it('normalizes unauthorized error', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 100 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 100 })
     await expect(adapter.generate('test UNAUTH')).rejects.toMatchObject({ code: 'unauthorized' })
   })
 
   it('retries on rate limit then surfaces error', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 50, maxRetries: 1 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 50, maxRetries: 1 })
     await expect(adapter.generate('please RATE again')).rejects.toMatchObject({ code: 'rate_limited' })
   })
 
   it('times out long requests', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 5, maxRetries: 0 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 5, maxRetries: 0 })
     await expect(adapter.generate('cause TIMEOUT delay')).rejects.toMatchObject({ code: 'timeout' })
   })
 
   it('streams content in chunks', async () => {
-    const adapter = new VertexAiProviderAdapter({ timeoutMs: 100 })
+  const adapter = new GoogleGenAiProviderAdapter({ timeoutMs: 100 })
     const gen = adapter.generateStream
     if (typeof gen !== 'function') {
       throw new Error('generateStream is not implemented on adapter')

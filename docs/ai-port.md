@@ -28,13 +28,13 @@ Adapters should map provider SDK errors to these codes, enabling consistent retr
 
 ## Implementations
 
-- Vertex (default): `VertexAiProviderAdapter` using `@google/genai`.
+- Google Gen AI (Developer API, default): `GoogleGenAiProviderAdapter` using `@google/genai` with `GOOGLE_API_KEY`.
 - LangChain (optional): `LangChainGenAiProviderAdapter` using `@langchain/google-genai`.
 
 Select at runtime via env:
 
 - `AI_PROVIDER=langchain` or `USE_LANGCHAIN=true` to enable LangChain.
-- Otherwise defaults to Vertex adapter.
+- Otherwise defaults to the Developer API adapter.
 
 Both adapters support:
 
@@ -113,7 +113,7 @@ const controller = (deps: { ai: AiProvider }) => async (ctx: Context) => {
 
 ## Adapters
 
-An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The production implementation is `VertexAiProviderAdapter` (Google Generative AI / Gemini) which handles:
+An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The production implementation is `GoogleGenAiProviderAdapter` (Google Generative AI / Gemini Developer API) which handles:
 
 1. Mapping `ChatMessage[]` (user/assistant roles) to vendor `Content[]` (user/model).
 2. Mapping `system` → `systemInstruction`.
@@ -125,7 +125,7 @@ An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The 
 Example (abridged) — details live in `src/modules/infra/adapters/service.adapters.ts`:
 
 ```ts
-class VertexAiProviderAdapter implements AiProvider {
+class GoogleGenAiProviderAdapter implements AiProvider {
   async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
     const history = options?.history ? mapHistory(options.history) : undefined
     const config = buildGenerationConfig(options?.config)

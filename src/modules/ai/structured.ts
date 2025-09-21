@@ -27,7 +27,6 @@ function extractJson(input: string): string {
   const fence = /```(?:json)?\s*([\s\S]*?)\s*```/i
   const m = fence.exec(input)
   if (m && m[1]) return m[1]
-  // try to find first { ... } balanced block quickly
   const start = input.indexOf('{')
   const end = input.lastIndexOf('}')
   if (start !== -1 && end !== -1 && end > start) return input.slice(start, end + 1)
