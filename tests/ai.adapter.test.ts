@@ -63,7 +63,7 @@ vi.mock('@google/genai', () => {
 
 beforeAll(() => {
   vi.stubEnv('AI_TIMEOUT_MS', '10')
-  vi.stubEnv('GOOGLE_API_KEY', 'test-key')
+  vi.stubEnv('GEMINI_API_KEY', 'test-key')
 })
 
 afterAll(() => {

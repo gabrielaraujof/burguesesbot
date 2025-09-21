@@ -28,7 +28,7 @@ Adapters should map provider SDK errors to these codes, enabling consistent retr
 
 ## Implementations
 
-- Google Gen AI (Developer API, default): `GoogleGenAiProviderAdapter` using `@google/genai` with `GOOGLE_API_KEY`.
+- Google Gen AI (Developer API, default): `GoogleGenAiProviderAdapter` using `@google/genai` with `GEMINI_API_KEY`.
 - LangChain (optional): `LangChainGenAiProviderAdapter` using `@langchain/google-genai`.
 
 Select at runtime via env:
