@@ -66,7 +66,9 @@ Resposta ideal:
 /**
  * Get persona by command type
  */
-export const getPersonaForCommand = (commandType: 'longweek' | 'trivia' | 'whosplaying' | 'general'): string => {
+export type CommandType = 'longweek' | 'trivia' | 'whosplaying' | 'general'
+
+export const getPersonaForCommand = (commandType: CommandType): string => {
   switch (commandType) {
     case 'longweek':
       return relaxationPersona

@@ -10,27 +10,30 @@ import { AiError } from '../../ai/index.js'
 let ChatGoogleGenerativeAI: any
 let HumanMessage: any
 let SystemMessage: any
+let AIMessage: any
 
 async function ensureLangChain() {
   if (!ChatGoogleGenerativeAI) {
     const mod = await import('@langchain/google-genai')
     ChatGoogleGenerativeAI = mod.ChatGoogleGenerativeAI
   }
-  if (!HumanMessage || !SystemMessage) {
+  if (!HumanMessage || !SystemMessage || !AIMessage) {
     const msgs = await import('@langchain/core/messages')
     HumanMessage = msgs.HumanMessage
     SystemMessage = msgs.SystemMessage
+    AIMessage = msgs.AIMessage
   }
 }
 
 function mapHistory(history?: ChatMessage[]) {
   if (!history || history.length === 0) return [] as any[]
-  return history.map((m) =>
-    m.role === 'user'
-      ? new HumanMessage(m.content)
-      : // assistant/system as assistant content to keep context; system handled separately if provided
-        new HumanMessage(m.content),
-  )
+  const mapped: any[] = []
+  for (const m of history) {
+    if (m.role === 'user') mapped.push(new HumanMessage(m.content))
+    else if (m.role === 'assistant') mapped.push(new AIMessage(m.content))
+    // ignore system turns; we add SystemMessage from options.system if provided
+  }
+  return mapped
 }
 
 function toModelParams(options?: GenerateOptions) {
