@@ -38,6 +38,7 @@ function toModelParams(options?: GenerateOptions) {
   const cfg = options?.config
   const params: Record<string, any> = {}
   if (cfg?.temperature != null) params.temperature = cfg.temperature
+  // Map provider-agnostic `maxTokens` → LangChain / Google `maxOutputTokens`
   if (cfg?.maxTokens != null) params.maxOutputTokens = cfg.maxTokens
   if (cfg?.topP != null) params.topP = cfg.topP
   if (cfg?.topK != null) params.topK = cfg.topK
@@ -76,6 +77,10 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
     this.maxRetries = params?.maxRetries ?? 2
   }
 
+  private includeUsage(): boolean {
+    return process.env.AI_INCLUDE_USAGE === '1' || process.env.AI_INCLUDE_USAGE === 'true'
+  }
+
   async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
     await ensureLangChain()
     let attempt = 0
@@ -86,7 +91,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
+          apiKey: process.env.GEMINI_API_KEY,
         })
 
         const messages: any[] = []
@@ -128,7 +133,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const model = new ChatGoogleGenerativeAI({
           model: this.modelName,
           ...toModelParams(options),
-          apiKey: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY,
+          apiKey: process.env.GEMINI_API_KEY,
         })
 
         const messages: any[] = []
@@ -139,7 +144,9 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
         const controller = new AbortController()
         const id = setTimeout(() => controller.abort(), this.defaultTimeout)
         try {
-          const stream = await model.stream(messages, { signal: controller.signal })
+          const streamOptions: any = { signal: controller.signal }
+          if (this.includeUsage()) streamOptions.stream_options = { include_usage: true }
+          const stream = await model.stream(messages, streamOptions)
           clearTimeout(id)
           for await (const chunk of stream as AsyncIterable<any>) {
             const piece = Array.isArray(chunk?.content)

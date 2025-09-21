@@ -41,7 +41,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@google/genai": "^0.2.0",
+    
     "@langchain/core": "^0.3.9",
     "@langchain/google-genai": "^0.1.5",
     "discord.js": "^14.22.1",
