@@ -28,15 +28,11 @@ Adapters should map provider SDK errors to these codes, enabling consistent retr
 
 ## Implementations
 
-- Google Gen AI (Developer API, default): `GoogleGenAiProviderAdapter` using `@google/genai` with `GEMINI_API_KEY`.
-- LangChain (optional): `LangChainGenAiProviderAdapter` using `@langchain/google-genai`.
+- LangChain (default): `LangChainGenAiProviderAdapter` using `@langchain/google-genai`.
 
-Select at runtime via env:
+LangChain is used as the project's default provider for all AI-powered commands. It delegates to the Google Generative models under the hood when configured with `GEMINI_API_KEY`.
 
-- `AI_PROVIDER=langchain` or `USE_LANGCHAIN=true` to enable LangChain.
-- Otherwise defaults to the Developer API adapter.
-
-Both adapters support:
+Both adapters (historical) support:
 
 - `system` prompts
 - conversation `history` (best-effort mapping)
@@ -113,32 +109,17 @@ const controller = (deps: { ai: AiProvider }) => async (ctx: Context) => {
 
 ## Adapters
 
-An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The production implementation is `GoogleGenAiProviderAdapter` (Google Generative AI / Gemini Developer API) which handles:
+An adapter maps the neutral `AiProvider` contract to a specific vendor SDK. The current production implementation is `LangChainGenAiProviderAdapter` (see `src/modules/infra/adapters/langchain.adapter.ts`) which:
 
-1. Mapping `ChatMessage[]` (user/assistant roles) to vendor `Content[]` (user/model).
-2. Mapping `system` → `systemInstruction`.
-3. Translating `CommonGenerationConfig` → vendor `GenerationConfig` (temperature, topP, topK, maxTokens, stopSequences).
-4. Enforcing a timeout (`AI_TIMEOUT_MS`, default 10s) via an `AbortController` pattern.
-5. Normalizing errors to an `AiError` with codes: `timeout`, `rate_limited`, `unauthorized`, `blocked`, `network`, `internal`.
-6. Light exponential backoff retry for transient `rate_limited` and `network` errors.
+1. Maps `ChatMessage[]` (user/assistant roles) to LangChain message types.
+2. Includes `system` messages when provided.
+3. Translates `CommonGenerationConfig` → provider params (`temperature`, `maxOutputTokens`, `topP`, `topK`, `stopSequences`).
+4. Enforces request timeouts via an `AbortController` pattern and normalizes errors to `AiError` codes.
 
-Example (abridged) — details live in `src/modules/infra/adapters/service.adapters.ts`:
+Example (abridged) — details live in `src/modules/infra/adapters/langchain.adapter.ts`:
 
 ```ts
-class GoogleGenAiProviderAdapter implements AiProvider {
-  async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
-    const history = options?.history ? mapHistory(options.history) : undefined
-    const config = buildGenerationConfig(options?.config)
-    const result = await withTimeout(() => sdkSend(modelArgs), timeoutMs)
-    return { text: text(result) }
-  }
-}
-
-class LangChainGenAiProviderAdapter implements AiProvider {
-  async generate(input: string, options?: GenerateOptions) {
-    // Uses ChatGoogleGenerativeAI under the hood, with streaming support
-  }
-}
+// LangChain-based adapter: uses ChatGoogleGenerativeAI and supports streaming via model.stream(...)
 ```
 
 ## Error Handling
