@@ -24,12 +24,9 @@ export async function withTyping<T>(
 	}
 }
 
-// Truncate by Unicode code points to avoid cutting surrogate pairs (emojis), which breaks UTF-8
 export function safeTruncate(input: string, maxLength: number): string {
 	const points = Array.from(input)
 	if (points.length <= maxLength) return input
 	return points.slice(0, maxLength).join('')
 }
-
-// Telegram enforces ~200 chars limit for quiz explanations; keep headroom for safety
 export const TELEGRAM_QUIZ_EXPLANATION_MAX_CHARS = 190

@@ -19,8 +19,7 @@ export class VertexAiProviderAdapter implements AiProvider {
   private readonly modelName: string
   private readonly defaultTimeout: number
   private readonly maxRetries: number
-  
-  // Narrow stream chunk shape used by our code/tests
+
   private static extractChunkText(chunk: unknown): string {
     const anyChunk = chunk as any
     const t = typeof anyChunk?.text === 'function' ? anyChunk.text() : anyChunk?.text
@@ -43,9 +42,7 @@ export class VertexAiProviderAdapter implements AiProvider {
   }) {
     const apiKey = process.env.VERTEXAI_API_KEY ?? ''
 
-    // Try to configure for Vertex AI, but fallback to Developer API if needed
     if (process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_LOCATION) {
-      // Configure for Vertex AI using environment variables
       this.client = new GoogleGenAI({
         vertexai: true,
         project: process.env.GOOGLE_CLOUD_PROJECT,
@@ -53,17 +50,15 @@ export class VertexAiProviderAdapter implements AiProvider {
         apiKey: apiKey,
       })
     } else {
-      // Fallback to Developer API
       this.client = new GoogleGenAI({
         apiKey: apiKey,
       })
     }
 
-    // Choose model based on API configuration
     const defaultModel =
       process.env.GOOGLE_CLOUD_PROJECT && process.env.GOOGLE_CLOUD_LOCATION
-        ? 'gemini-2.5-flash-002' // Vertex AI supports latest models
-        : 'gemini-1.5-flash' // Developer API - use stable model
+        ? 'gemini-2.5-flash-002'
+        : 'gemini-1.5-flash'
 
     this.modelName = params?.modelName || process.env.AI_MODEL || defaultModel
     this.defaultTimeout = params?.timeoutMs || parseInt(process.env.AI_TIMEOUT_MS || '30000')
@@ -73,11 +68,9 @@ export class VertexAiProviderAdapter implements AiProvider {
   async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
     let attempt = 0
 
-    // retry loop with exponential backoff
     while (true) {
       attempt++
       try {
-        // Build contents with optional history
         const contents = this.buildContents(input, options)
         const result = await this.callWithTimeout(async () => {
           return await this.client.models.generateContent({
@@ -123,7 +116,6 @@ export class VertexAiProviderAdapter implements AiProvider {
           return
         }
 
-        // Fallback: try to get text from stream object directly
         const fallbackText = VertexAiProviderAdapter.extractFallbackText(stream)
         if (fallbackText) yield fallbackText
         return
@@ -147,11 +139,10 @@ export class VertexAiProviderAdapter implements AiProvider {
       maxOutputTokens: options?.config?.maxTokens || 250,
     }
 
-    // Add thinking configuration for Gemini 2.5 Flash models only
     if (this.supportsThinkingConfig(this.modelName)) {
       config.thinkingConfig = {
-        thinkingBudget: -1, // Enable unlimited thinking
-        includeThoughts: false, // Don't include thinking in response
+        thinkingBudget: -1,
+        includeThoughts: false,
       }
     }
 
@@ -159,7 +150,6 @@ export class VertexAiProviderAdapter implements AiProvider {
       config.stopSequences = options.config.stopSequences
     }
 
-    // Add system instruction if provided
     if (options?.system) {
       config.systemInstruction = options.system
     }
@@ -168,23 +158,18 @@ export class VertexAiProviderAdapter implements AiProvider {
   }
 
   private buildContents(input: string, options?: GenerateOptions) {
-    // Google GenAI v2 models accept strings or rich contents; we construct a simple
-    // string conversation by concatenating prior turns with markers, preserving
-    // current tests that assert `contents` is a string when no history exists.
     const history = options?.history
     if (!history || history.length === 0) return input
     const lines: string[] = []
     for (const m of history) {
       if (m.role === 'user') lines.push(`User: ${m.content}`)
       else if (m.role === 'assistant') lines.push(`Assistant: ${m.content}`)
-      // system is handled via config.systemInstruction below
     }
     lines.push(`User: ${input}`)
     return lines.join('\n')
   }
 
   private supportsThinkingConfig(modelName: string): boolean {
-    // Accept known Gemini 2.5 Flash variants, e.g., gemini-2.5-flash, gemini-2.5-flash-001, -002
     return /^gemini-2\.5-flash(?:-\d+)?$/i.test(modelName)
   }
 
@@ -212,7 +197,6 @@ export class VertexAiProviderAdapter implements AiProvider {
     const message = err?.message || 'Unknown AI error'
     const status = err?.status || err?.code
 
-    // classification
     if (message.includes('timed out')) return new AiError(message, 'timeout')
     if (status === 401 || status === 403 || /unauthorized|forbidden|API key/i.test(message)) {
       return new AiError(message, 'unauthorized')

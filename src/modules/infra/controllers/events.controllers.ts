@@ -39,7 +39,6 @@ import { renderLongweekPrompt, renderTriviaExplanationPrompt } from '../../ai/pr
 
 export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
   return async (ctx: Context) => {
-    // lightweight log without sensitive contents
     if (process.env.NODE_ENV !== 'test') console.info('Answering semanalonga')
     try {
       let response = ''
@@ -60,7 +59,7 @@ export const createLongweekController = (deps: { aiProvider: AiProvider }) => {
       await ctx.reply(response.trim())
     } catch (err) {
       console.error('Longweek AI error:', err)
-      // Fallback to original message if AI fails
+      
       await ctx.reply('cadê a live?')
     }
   }

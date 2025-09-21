@@ -43,7 +43,7 @@ vi.mock('@google/genai', () => {
         throw err
       }
       
-      // Simulate streaming chunks
+      
       const response = `Echo: ${input}`
       const chunks = response.match(/.{1,5}/g) || [response]
       for (const chunk of chunks) {
@@ -135,6 +135,6 @@ describe('VertexAiProviderAdapter', () => {
       chunks.push(chunk)
     }
     expect(chunks.join('')).toBe('Echo: hello streaming')
-    expect(chunks.length).toBeGreaterThan(1) // Should be chunked
+    expect(chunks.length).toBeGreaterThan(1)
   })
 })
