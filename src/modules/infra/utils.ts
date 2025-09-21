@@ -25,8 +25,21 @@ export async function withTyping<T>(
 }
 
 export function safeTruncate(input: string, maxLength: number): string {
-	const points = Array.from(input)
-	if (points.length <= maxLength) return input
-	return points.slice(0, maxLength).join('')
+	if (maxLength <= 0) return ''
+	const AnyIntl: any = globalThis.Intl as any
+	const hasSegmenter = !!(AnyIntl && AnyIntl.Segmenter)
+	if (hasSegmenter) {
+		const seg = new AnyIntl.Segmenter(undefined, { granularity: 'grapheme' })
+		const segments: string[] = []
+		for (const s of seg.segment(input) as any) {
+			segments.push(s.segment)
+		}
+		if (segments.length <= maxLength) return input
+		return segments.slice(0, maxLength).join('')
+	} else {
+		const points = Array.from(input)
+		if (points.length <= maxLength) return input
+		return points.slice(0, maxLength).join('')
+	}
 }
 export const TELEGRAM_QUIZ_EXPLANATION_MAX_CHARS = 190

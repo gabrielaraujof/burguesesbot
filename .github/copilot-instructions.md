@@ -103,5 +103,3 @@ Purpose: give an AI coding agent the minimal, concrete knowledge to be productiv
 
 - Safety and secrets
   - Do not commit API keys. Use `serverless.yml` and dotenv to wire env values in CI/deploy. `serverless-dotenv-plugin` is configured.
-
-If anything here is unclear or you’d like more detail (e.g., adding serverless-offline or a bundler), tell me what to expand and I’ll iterate.

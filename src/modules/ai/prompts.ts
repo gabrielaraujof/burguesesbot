@@ -58,7 +58,6 @@ export async function renderTriviaExplanationPrompt(params: {
   const system = getPersonaForCommand('trivia')
   let messages
   {
-    // Components
     const persona = PromptTemplate.fromTemplate('{persona}')
     const examples = PromptTemplate.fromTemplate(
       [
@@ -79,8 +78,7 @@ export async function renderTriviaExplanationPrompt(params: {
         { name: 'examples', prompt: examples },
         { name: 'task', prompt: task },
       ],
-      // Keep persona only as system message; do not duplicate inside content
-      finalPrompt: PromptTemplate.fromTemplate('{examples}\n\n{task}')
+        finalPrompt: PromptTemplate.fromTemplate('{examples}\n\n{task}')
     })
 
     const example1Output = '{"explanation":"\n- A alternativa correta é B) Paris, capital da França.\n- Paris é conhecida como a Cidade Luz, e é o centro político e cultural francês.","fun_fact":"A Torre Eiffel foi construída para a Exposição Universal de 1889 e quase foi desmontada depois."}'
