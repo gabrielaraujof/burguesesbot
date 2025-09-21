@@ -5,8 +5,6 @@ import type {
   GenerateOptions,
 } from '../../ai/index.js'
 import { AiError } from '../../ai/index.js'
-
-// Lazy imports keep optional dependency lightweight for non-LangChain users
 let ChatGoogleGenerativeAI: any
 let HumanMessage: any
 let SystemMessage: any
@@ -31,7 +29,7 @@ function mapHistory(history?: ChatMessage[]) {
   for (const m of history) {
     if (m.role === 'user') mapped.push(new HumanMessage(m.content))
     else if (m.role === 'assistant') mapped.push(new AIMessage(m.content))
-    // ignore system turns; we add SystemMessage from options.system if provided
+    
   }
   return mapped
 }
