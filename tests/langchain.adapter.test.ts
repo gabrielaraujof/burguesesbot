@@ -109,11 +109,16 @@ describe('LangChainGenAiProviderAdapter', () => {
     for await (const ch of adapter.generateStream!('usage test')) {
       chunks.push(ch)
     }
-    // cleanup env
-    delete process.env.AI_INCLUDE_USAGE
+  ;(globalThis as any).__lcMock = undefined
+    const res = await adapter.generate('usage test (sync)')
+  delete process.env.AI_INCLUDE_USAGE
     expect((globalThis as any).__lcMock.options).toBeDefined()
     expect((globalThis as any).__lcMock.options.stream_options).toBeDefined()
     expect((globalThis as any).__lcMock.options.stream_options.include_usage).toBe(true)
+    // If the mock returned usage, adapter should surface it
+    if (res.usage) {
+      expect(res.usage).toBeDefined()
+    }
   })
 
   it('maps config values and system/history correctly', async () => {

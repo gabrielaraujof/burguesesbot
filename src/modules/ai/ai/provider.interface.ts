@@ -21,6 +21,11 @@ export type GenerateOptions = {
 
 export type AiResponse = {
   text: string
+  usage?: {
+    promptTokens?: number
+    completionTokens?: number
+    totalTokens?: number
+  } | Record<string, any>
 }
 
 export interface AiProvider {
