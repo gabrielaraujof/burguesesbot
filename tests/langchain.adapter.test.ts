@@ -1,62 +1,59 @@
 import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
-import { LangChainGenAiProviderAdapter } from '../src/modules/infra/adapters/langchain.adapter.js'
 
 // Mocks for @langchain/google-genai and @langchain/core/messages
-class MockLLM {
-  config: any
-  constructor(config: any) {
-    this.config = config
-  }
-  async invoke(messages: any[], options?: any) {
-    ;(globalThis as any).__lcMock = { messages, config: this.config, options }
-    const last = messages[messages.length - 1]
-    const content = typeof last === 'string' ? last : last?.content || ''
-
-    const job = (async () => {
-      if (String(content).includes('TIMEOUT')) {
-        // simulate a slow model call
-        await new Promise((r) => setTimeout(r, 50))
-      }
-      if (String(content).includes('UNAUTH')) {
-        const err: any = new Error('unauthorized')
-        err.status = 401
-        throw err
-      }
-      if (String(content).includes('RATE')) {
-        const err: any = new Error('rate limited')
-        err.status = 429
-        throw err
-      }
-      return { content: `LC Echo: ${content}` }
-    })()
-
-    if (options?.signal) {
-      const abortPromise = new Promise((_res, reject) => {
-        if (options.signal.aborted) return reject(new Error('timed out'))
-        options.signal.addEventListener('abort', () => reject(new Error('timed out')))
-      })
-      return Promise.race([job, abortPromise])
-    }
-
-    return job
-  }
-  async stream(messages: any[], options?: any) {
-  ;(globalThis as any).__lcMock = { messages, config: this.config, options }
-    const last = messages[messages.length - 1]
-    const content = typeof last === 'string' ? last : last?.content || ''
-    async function* gen() {
-      const response = `LC Echo: ${content}`
-      const chunks = response.match(/.{1,4}/g) || [response]
-      for (const c of chunks) {
-        yield { content: c }
-      }
-    }
-    return gen()
-  }
-}
-
 vi.mock('@langchain/google-genai', () => ({
-  ChatGoogleGenerativeAI: MockLLM,
+  ChatGoogleGenerativeAI: class MockLLM {
+    config: any
+    constructor(config: any) {
+      this.config = config
+    }
+    async invoke(messages: any[], options?: any) {
+      ;(globalThis as any).__lcMock = { messages, config: this.config, options }
+      const last = messages[messages.length - 1]
+      const content = typeof last === 'string' ? last : last?.content || ''
+
+      const job = (async () => {
+        if (String(content).includes('TIMEOUT')) {
+          // simulate a slow model call
+          await new Promise((r) => setTimeout(r, 50))
+        }
+        if (String(content).includes('UNAUTH')) {
+          const err: any = new Error('unauthorized')
+          err.status = 401
+          throw err
+        }
+        if (String(content).includes('RATE')) {
+          const err: any = new Error('rate limited')
+          err.status = 429
+          throw err
+        }
+        return { content: `LC Echo: ${content}` }
+      })()
+
+      if (options?.signal) {
+        const abortPromise = new Promise((_res, reject) => {
+          if (options.signal.aborted) return reject(new Error('timed out'))
+          options.signal.addEventListener('abort', () => reject(new Error('timed out')))
+        })
+        return Promise.race([job, abortPromise])
+      }
+
+      return job
+    }
+    async stream(messages: any[], options?: any) {
+      ;(globalThis as any).__lcMock = { messages, config: this.config, options }
+      const last = messages[messages.length - 1]
+      const content = typeof last === 'string' ? last : last?.content || ''
+      async function* gen() {
+        const response = `LC Echo: ${content}`
+        const chunks = response.match(/.{1,4}/g) || [response]
+        for (const c of chunks) {
+          yield { content: c }
+        }
+      }
+      return gen()
+    }
+  }
 }))
 
 vi.mock('@langchain/core/messages', () => ({
@@ -73,6 +70,8 @@ vi.mock('@langchain/core/messages', () => ({
     constructor(content: string) { this.content = content }
   }
 }))
+
+import { LangChainGenAiProviderAdapter } from '../src/modules/infra/adapters/langchain.adapter.js'
 
 beforeAll(() => {
   vi.stubEnv('USE_LANGCHAIN', 'true')
