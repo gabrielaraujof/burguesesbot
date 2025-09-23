@@ -1,82 +1,14 @@
 import type {
   AiProvider,
   AiResponse,
-  ChatMessage,
   GenerateOptions,
 } from '../../ai/index.js'
 import { AiError } from '../../ai/index.js'
 
-// Use official library types (type-only) while keeping runtime dynamic imports
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
-import { HumanMessage, SystemMessage, AIMessage, type BaseMessage } from '@langchain/core/messages'
-
-// Minimal provider response types to avoid broad `any` usage while keeping flexibility
-type ProviderTextChunk = string | { text?: string } | { content?: ProviderContent } | { delta?: ProviderContent }
-type ProviderContent = Array<string | { text?: string } | { content?: ProviderContent } | { delta?: ProviderContent }> | string | { text?: string } | null | undefined
-type Usage = { promptTokens?: number; completionTokens?: number; totalTokens?: number } | Record<string, number>
-type ProviderResponse = { content?: ProviderContent; usage?: Usage }
-
-type StreamChunk =
-  | { content?: ProviderContent }
-  | { delta?: ProviderContent }
-  | { text?: string }
-  | string
-
-interface ModelParams {
-  temperature?: number
-  maxOutputTokens?: number
-  topP?: number
-  topK?: number
-  stopSequences?: string[]
-}
-
-function mapHistory(history?: ChatMessage[]): BaseMessage[] {
-  if (!history || history.length === 0) return [] as BaseMessage[]
-  const mapped: BaseMessage[] = []
-  for (const m of history) {
-    if (m.role === 'user') mapped.push(new HumanMessage(m.content))
-    else if (m.role === 'assistant') mapped.push(new AIMessage(m.content))
-  }
-  return mapped
-}
-
-function toModelParams(options?: GenerateOptions) {
-  const cfg = options?.config
-  const params: Record<string, any> = {}
-  if (cfg?.temperature != null) params.temperature = cfg.temperature
-  // Map provider-agnostic `maxTokens` → LangChain / Google `maxOutputTokens`
-  if (cfg?.maxTokens != null) params.maxOutputTokens = cfg.maxTokens
-  if (cfg?.topP != null) params.topP = cfg.topP
-  if (cfg?.topK != null) params.topK = cfg.topK
-  if (cfg?.stopSequences) params.stopSequences = cfg.stopSequences
-  return params
-}
-
-function normalizeError(err: unknown): AiError & { retry?: boolean } {
-  if (err instanceof AiError) return err
-  const message = (err as { message?: unknown })?.message
-  const msgStr = typeof message === 'string' ? message : 'Unknown AI error'
-  const status = (err as { status?: unknown })?.status ?? (err as { code?: unknown })?.code
-
-  const isTimeout = () => /timed out|Timeout/i.test(msgStr) || (err as any)?.name === 'AbortError'
-  const isUnauthorized = () => status === 401 || status === 403 || /unauthorized|forbidden|API key/i.test(msgStr)
-  const isRateLimited = () => status === 429 || /rate/i.test(msgStr)
-  const isBlocked = () => /blocked|safety/i.test(msgStr)
-  const isNetwork = () => /ENOTFOUND|ECONN|network|fetch failed/i.test(msgStr)
-
-  if (isTimeout()) return new AiError(msgStr, 'timeout')
-  if (isUnauthorized()) return new AiError(msgStr, 'unauthorized')
-  if (isRateLimited()) {
-    const e = new AiError(msgStr, 'rate_limited')
-    return Object.assign(e, { retry: true })
-  }
-  if (isBlocked()) return new AiError(msgStr, 'blocked')
-  if (isNetwork()) {
-    const e = new AiError(msgStr, 'network')
-    return Object.assign(e, { retry: true })
-  }
-  return new AiError(msgStr, 'internal')
-}
+import { type BaseMessage } from '@langchain/core/messages'
+import type { ProviderContent, Usage, ProviderResponse, StreamChunk } from './langchain.types.js'
+import { toModelParams, buildMessages, extractTextContent, chunkToText, normalizeError } from './langchain.helpers.js'
 
 export class LangChainGenAiProviderAdapter implements AiProvider {
   private readonly modelName: string
@@ -101,12 +33,41 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
     })
   }
 
+  private prepareModelCall(input: string, options?: GenerateOptions) {
+    const model = this.createModel(options)
+    const messages = this.buildMessages(input, options)
+    const invokeOrStreamOptions: { signal: AbortSignal; stream_options?: { include_usage?: boolean } } = { signal: undefined as unknown as AbortSignal }
+    if (this.includeUsage()) invokeOrStreamOptions.stream_options = { include_usage: true }
+    return { model, messages, invokeOrStreamOptions }
+  }
+
+  private async callWithModel<T>(
+    input: string,
+    options: GenerateOptions | undefined,
+    executor: (model: any, messages: BaseMessage[], signal: AbortSignal) => Promise<T>,
+  ): Promise<T> {
+    return this.withRetries(
+      async () => {
+        const { model, messages } = this.prepareModelCall(input, options)
+
+        const res = await this.withAbortTimeout(
+          (signal) => executor(model, messages, signal),
+          this.defaultTimeout,
+        )
+
+        return res
+      },
+      (err) => {
+        const aiErr = normalizeError(err)
+        if (aiErr.code === 'timeout') return { retry: false }
+        return { retry: Boolean((aiErr as { retry?: boolean }).retry) }
+      },
+      this.maxRetries,
+    )
+  }
+
   private buildMessages(input: string, options?: GenerateOptions): BaseMessage[] {
-    const messages: BaseMessage[] = []
-    if (options?.system) messages.push(new SystemMessage(options.system))
-    messages.push(...mapHistory(options?.history))
-    messages.push(new HumanMessage(input))
-    return messages
+    return buildMessages(input, options)
   }
 
   private async withAbortTimeout<T>(fn: (signal: AbortSignal) => Promise<T>, timeoutMs: number): Promise<T> {
@@ -148,21 +109,7 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
   }
 
   private extractTextContent(content: ProviderContent): string {
-    if (content == null) return ''
-    if (typeof content === 'string') return content
-    if (Array.isArray(content)) {
-      return content
-        .map((c: unknown) => {
-          if (typeof c === 'string') return c
-          if (c && typeof (c as { text?: unknown }).text === 'string') return (c as { text?: string }).text
-          if (c && typeof (c as { content?: unknown }).content !== 'undefined') return this.extractTextContent((c as { content?: ProviderContent }).content)
-          if (c && typeof (c as { delta?: unknown }).delta !== 'undefined') return this.extractTextContent((c as { delta?: ProviderContent }).delta)
-          return ''
-        })
-        .join('')
-    }
-    if (typeof content === 'object' && (content as { text?: string }).text) return String((content as { text?: string }).text)
-    return String(content)
+    return extractTextContent(content)
   }
 
   private toAiResponse(res: unknown, includeUsage: boolean): AiResponse {
@@ -175,66 +122,28 @@ export class LangChainGenAiProviderAdapter implements AiProvider {
   }
 
   private async createStream(input: string, options?: GenerateOptions): Promise<AsyncIterable<StreamChunk>> {
-    return this.withRetries(
-      async () => {
-        const model = this.createModel(options)
-        const messages = this.buildMessages(input, options)
-
-        const stream = await this.withAbortTimeout(
-          (signal) => {
-            const streamOptions: { signal: AbortSignal; stream_options?: { include_usage?: boolean } } = { signal }
-            if (this.includeUsage()) streamOptions.stream_options = { include_usage: true }
-            return model.stream(messages, streamOptions) as Promise<AsyncIterable<StreamChunk>>
-          },
-          this.defaultTimeout,
-        )
-        return stream
-      },
-      (err) => {
-        const aiErr = normalizeError(err)
-        if (aiErr.code === 'timeout') return { retry: false }
-        return { retry: Boolean((aiErr as { retry?: boolean }).retry) }
-      },
-      this.maxRetries,
-    )
+    return this.callWithModel<AsyncIterable<StreamChunk>>(input, options, (model, messages, signal) => {
+      const streamOptions: { signal: AbortSignal; stream_options?: { include_usage?: boolean } } = { signal }
+      if (this.includeUsage()) streamOptions.stream_options = { include_usage: true }
+      return model.stream(messages, streamOptions) as Promise<AsyncIterable<StreamChunk>>
+    })
   }
 
   async generate(input: string, options?: GenerateOptions): Promise<AiResponse> {
-    
-    return this.withRetries(
-      async () => {
-        const model = this.createModel(options)
-        const messages = this.buildMessages(input, options)
+    const res = await this.callWithModel<any>(input, options, (model, messages, signal) => {
+      const invokeOptions: { signal: AbortSignal; stream_options?: { include_usage?: boolean } } = { signal }
+      if (this.includeUsage()) invokeOptions.stream_options = { include_usage: true }
+      return model.invoke(messages, invokeOptions)
+    })
 
-        const res = await this.withAbortTimeout(
-          (signal) => {
-            const invokeOptions: { signal: AbortSignal; stream_options?: { include_usage?: boolean } } = { signal }
-            if (this.includeUsage()) invokeOptions.stream_options = { include_usage: true }
-            return model.invoke(messages, invokeOptions)
-          },
-          this.defaultTimeout,
-        )
-
-        return this.toAiResponse(res, this.includeUsage())
-      },
-      (err) => {
-        const aiErr = normalizeError(err)
-        if (aiErr.code === 'timeout') return { retry: false }
-        return { retry: Boolean((aiErr as { retry?: boolean }).retry) }
-      },
-      this.maxRetries,
-    )
+    return this.toAiResponse(res, this.includeUsage())
   }
 
   async *generateStream(input: string, options?: GenerateOptions): AsyncIterable<string> {
     const stream = await this.createStream(input, options)
     for await (const chunk of stream as AsyncIterable<StreamChunk>) {
-      let piece = ''
-      if (typeof chunk === 'string') piece = chunk
-      else if (chunk && typeof (chunk as { text?: unknown }).text === 'string') piece = String((chunk as { text?: string }).text)
-      else if (chunk && typeof (chunk as { content?: unknown }).content !== 'undefined') piece = this.extractTextContent((chunk as { content?: ProviderContent }).content)
-      else if (chunk && typeof (chunk as { delta?: unknown }).delta !== 'undefined') piece = this.extractTextContent((chunk as { delta?: ProviderContent }).delta)
-      if (piece) yield String(piece)
+      const piece = chunkToText(chunk)
+      if (piece) yield piece
     }
     return
   }
