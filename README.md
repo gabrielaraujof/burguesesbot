@@ -63,6 +63,21 @@ Note: Webhook Lambda is not tested locally (no serverless-offline configured). U
 - Domains: `src/modules/{ai,freegames,trivia,whosplaying}`.
 - Lambda entrypoint: `src/modules/infra/function.ts`.
 
+## Copilot custom instructions
+
+- Global rules: `.github/copilot-instructions.md` (short, DI and wiring rules).
+- Scoped rules: `.github/instructions/*.instructions.md` with `applyTo` globs, for example:
+	- AI: `.github/instructions/ai.instructions.md` → `**/src/modules/ai/**`
+	- Events: `.github/instructions/events.instructions.md` → `**/src/modules/events/**`
+	- Infra/Adapters: `.github/instructions/adapters.instructions.md` → `**/src/modules/infra/**`
+- Enable in VS Code: turn on “Use instruction files” (`github.copilot.chat.codeGeneration.useInstructionFiles`).
+- View/edit: Chat → Configure Chat → Instructions.
+
+Verification (manual):
+- Open a file under `src/modules/ai/` and invoke Copilot Chat to generate code; confirm AI module rules (streaming first, `AiError` normalization) are followed.
+- Open a file under `src/modules/events/` and generate a handler; confirm controller stays thin and commands are registered only in `events.ts`.
+- If rules aren’t applied, confirm the setting above is enabled and the workspace contains the files listed here.
+
 ## Testing
 
 ```bash
