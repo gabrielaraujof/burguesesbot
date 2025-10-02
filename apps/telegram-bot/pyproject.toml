@@ -1,0 +1,14 @@
+[project]
+name = "telegram-bot"
+version = "0.0.0"
+description = "Telegram bot app (skeleton)"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+  { include = "telegram_bot", from = "src" }
+]
