@@ -2,7 +2,7 @@ name: Python CI
 
 on:
   push:
-    branches: [ main, recreation-from-scratch, feat/issue-66-poetry-monoranger ]
+    branches: [ main, recreation-from-scratch ]
   pull_request:
     branches: [ main, recreation-from-scratch ]
 
