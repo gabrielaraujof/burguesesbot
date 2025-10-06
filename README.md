@@ -29,6 +29,33 @@ libs/
 		src/mcp_utils/__init__.py
 
 pyproject.toml   # root: Poetry in non-package mode + Monoranger workspace packages
+
+### Python workspace (how to use)
+
+The repository contains a lightweight Python monorepo scaffold managed with Poetry (root in non-package mode) and Monoranger for workspace discovery.
+
+Install dependencies and run tooling from the repository root:
+
+```bash
+# Install Poetry (official installer recommended)
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Make sure Poetry's bin directory is on your PATH (example for Bash/zsh)
+export PATH="$HOME/.local/bin:$PATH"
+
+# From the repo root: create the venv and install workspace dev deps
+poetry install
+
+# Run formatters and tests from the root (uses the workspace virtualenv)
+poetry run black --check .
+poetry run isort --check-only .
+poetry run pytest -q || true   # exits non-zero if there are no tests yet
+```
+
+Notes:
+- The root `pyproject.toml` contains a small dev group with `black`, `isort`, and `pytest` and a `[tool.monoranger]` package list used by Monoranger.
+- Subpackages keep their own `pyproject.toml` for package metadata; dev tooling is centralized at the root to avoid duplication.
+
 ```
 
 Root `pyproject.toml` config:
@@ -47,7 +74,6 @@ poetry run python -c "import sys; print(sys.version)"
 ```
 
 Note: Monoranger is configured at the root via `[tool.monoranger]` and can be wired later for workspace-aware operations.
-
 ## Prerequisites
 - Node version from `.nvmrc` (use `nvm install && nvm use`)
 - Environment variables (see `.env.example`)
@@ -159,4 +185,3 @@ const b = await mock.generate('hello', { system: 's' })
 ## License
 
 [MIT](LICENSE)
-
