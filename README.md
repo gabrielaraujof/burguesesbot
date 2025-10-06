@@ -2,6 +2,78 @@
 
 An ESM TypeScript Telegram bot built with Telegraf, deployed to AWS Lambda via Serverless, and organized as a modular monolith with dependency injection.
 
+## Python monorepo scaffold (Poetry + Monoranger)
+
+This repo now also hosts a minimal Python monorepo scaffold to support multiple MCP services alongside the Telegram bot app. It's intentionally simple and defers non-essential tooling to future issues.
+
+Structure:
+
+```
+apps/
+	telegram-bot/
+		pyproject.toml
+		src/telegram_bot/__init__.py
+services/
+	gaming-social-mcp/
+		pyproject.toml
+		src/gaming_social_mcp/__init__.py
+	content-deals-mcp/
+		pyproject.toml
+		src/content_deals_mcp/__init__.py
+libs/
+	common/
+		pyproject.toml
+		src/common/__init__.py
+	mcp_utils/
+		pyproject.toml
+		src/mcp_utils/__init__.py
+
+pyproject.toml   # root: Poetry in non-package mode + Monoranger workspace packages
+
+### Python workspace (how to use)
+
+The repository contains a lightweight Python monorepo scaffold managed with Poetry (root in non-package mode) and Monoranger for workspace discovery.
+
+Install dependencies and run tooling from the repository root:
+
+```bash
+# Install Poetry (official installer recommended)
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Make sure Poetry's bin directory is on your PATH (example for Bash/zsh)
+export PATH="$HOME/.local/bin:$PATH"
+
+# From the repo root: create the venv and install workspace dev deps
+poetry install
+
+# Run formatters and tests from the root (uses the workspace virtualenv)
+poetry run black --check .
+poetry run isort --check-only .
+poetry run pytest -q || true   # exits non-zero if there are no tests yet
+```
+
+Notes:
+- The root `pyproject.toml` contains a small dev group with `black`, `isort`, and `pytest` and a `[tool.monoranger]` package list used by Monoranger.
+- Subpackages keep their own `pyproject.toml` for package metadata; dev tooling is centralized at the root to avoid duplication.
+
+```
+
+Root `pyproject.toml` config:
+
+- Poetry package-mode disabled (dependency/env mgmt only)
+- Monoranger workspace package list under `[tool.monoranger]`
+
+Minimal bootstrap (per package):
+
+1) Install Poetry if needed (https://python-poetry.org/docs/#installation)
+2) In each package directory (e.g. `apps/telegram-bot`):
+
+```bash
+poetry install
+poetry run python -c "import sys; print(sys.version)"
+```
+
+Note: Monoranger is configured at the root via `[tool.monoranger]` and can be wired later for workspace-aware operations.
 ## Prerequisites
 - Node version from `.nvmrc` (use `nvm install && nvm use`)
 - Environment variables (see `.env.example`)
